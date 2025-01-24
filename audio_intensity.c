@@ -6,17 +6,16 @@
 #include <sys/audioio.h>
 #include <math.h>
 #include <kissfft/kiss_fft.h>
+// there is also /usr/pkg/include/sndfile.h
+// sndfile.h apparently can convert between the different data structures
 
 #include "audio_ctrl.h"
 #include "audio_stream.h"
 
-#define MU 255
-#define MU_BIAS 33
-#define MAX_LINEAR 32767
-#define SIGN_MASK 0x80
-#define EXCESS_127 0x7F
+#define STREAM_DURATION 250
+#define ESC 27
 
-// numbers get MORE negative as the amplitude increases
+
 float calculate_rms(signed char *data, int start, int end) {
 	float sum = 0.0;
 	int length = end - start;
@@ -35,6 +34,7 @@ int main(int argc, char *argv[])
 	int x_padding, y_padding;
 	int bar_start, bar_end, bar_distance;
 	int draw_length;
+	int keypress;
 	float percent = 0.0;
 
 	// recording stuff
@@ -42,8 +42,6 @@ int main(int argc, char *argv[])
 	int s_index = 0;
 	audio_ctrl_t record_ctrl;
 	audio_stream_t stream1, stream2;
-	audio_stream_t streams[] = {stream1, stream2};
-	audio_stream_t cur_stream;
 
 	if (argc <= 1) {
 		err(1, "Specify a recording audio device");
@@ -51,25 +49,12 @@ int main(int argc, char *argv[])
 
 	recording_audio_path = argv[1];
 	build_audio_ctrl(&record_ctrl, recording_audio_path, AUMODE_RECORD);
-	build_stream(
-	    250,
-	    record_ctrl.config.channels,
-	    record_ctrl.config.sample_rate,
-	    record_ctrl.config.buffer_size,
-	    record_ctrl.config.encoding,
-	    &streams[0]
-	);
-	build_stream(
-	    250,
-	    record_ctrl.config.channels,
-	    record_ctrl.config.sample_rate,
-	    record_ctrl.config.buffer_size,
-	    record_ctrl.config.encoding,
-		&streams[1]
-	);
+	build_stream_from_ctrl(record_ctrl, STREAM_DURATION, &stream1);
 	
 	initscr();
+	raw();
 	noecho();
+	nodelay(stdscr, TRUE);
 	getmaxyx(stdscr, row, col);
 	y_padding = col / 10; 
 	x_padding = row / 10;
@@ -81,22 +66,28 @@ int main(int argc, char *argv[])
 	mvprintw(3 + x_padding, bar_start, "0\%");
 	mvprintw(3 + x_padding, bar_start + bar_distance/2, "50\%");
 	mvprintw(3 + x_padding, bar_start + bar_distance - 3, "100\%");
+	move(2*x_padding, 0);
 	refresh();
 
+	// TODO i want to define a macro so i can have my print methods work
+	// in either printf / printw
+	//print_ctrl(record_ctrl);
+	//print_stream(stream1);
 	while(1) {
-		s_index ^= 1;
-		cur_stream = streams[s_index];
-		stream(record_ctrl, &cur_stream);
+		keypress = getch();
+		if (keypress == ESC) break;
+
+		stream(record_ctrl, &stream1);
 
 		int size = 0;
-		for (int i = 0; i < cur_stream.buffer_count; i++) {
-			size += cur_stream.buffers[i]->size;
+		for (int i = 0; i < stream1.buffer_count; i++) {
+			size += stream1.buffers[i]->size;
 		}
 		// it would be nice to have the full size as part of the stream
 		signed char *full_sample = malloc(sizeof(u_char)*size);
 		int li = 0;
-		for (int i = 0; i < cur_stream.buffer_count; i++) {
-			audio_buffer_t *buffer = cur_stream.buffers[i];
+		for (int i = 0; i < stream1.buffer_count; i++) {
+			audio_buffer_t *buffer = stream1.buffers[i];
 
 			for (int j = 0; j < buffer->size; j++) {
 				u_char s = buffer->data[j];
@@ -113,7 +104,7 @@ int main(int argc, char *argv[])
 			percent = (float) rms / 127 * 100;
 			if (percent >= 0) {
 				draw_length = bar_distance * (percent / (float) 100.0);
-				mvhline(2 + x_padding, bar_start, ' ', bar_distance);
+				mvhline(2 + x_padding, bar_start, ' ', bar_distance); // is it better to clear the screen?
 				mvhline(2 + x_padding, bar_start, '=', draw_length);
 				move(1, 0);
 				refresh(); // do i need to refresh?
@@ -128,9 +119,8 @@ int main(int argc, char *argv[])
 
 		free(full_sample);
 	}
-	getch();
 	endwin();
 
-	// TODO clean buffers
+	clean_buffers(&stream1);
 	return 0;
 }

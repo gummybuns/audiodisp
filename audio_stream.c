@@ -18,44 +18,89 @@ void print_stream(audio_stream_t stream)
 	    "\tsamples_streamed:\t%d\n"
 	    "\tchannels:\t\t%d\n"
 	    "\tencoding:\t\t%s\n"
+	    "\tprecision:\t\t%d\n"
 	    "\tbuffer_count:\t\t%d\n",
 	    stream.milliseconds,
 	    stream.samples_streamed,
 		stream.channels,
 		encoding,
+		stream.precision,
 	    stream.buffer_count
 	);
+	printf("\tBUFFERS\n");
+	for(int i = 0; i < stream.buffer_count; i++) {
+		printf("\t\tbuffer[%d]\n", i);
+		printf("\t\tsize: %d\n", stream.buffers[i]->size);
+		printf("\t\tprecision: %d\n", stream.buffers[i]->precision);
+	}
 }
+int build_stream_from_ctrl(audio_ctrl_t ctrl, int ms, audio_stream_t *stream)
+{
+	return build_stream(
+	    ms,
+	    ctrl.config.channels,
+	    ctrl.config.sample_rate,
+	    ctrl.config.buffer_size,
+	    ctrl.config.precision,
+	    ctrl.config.encoding,
+	    stream
+	);
+}
+
 int build_stream(
     int milliseconds,
     int channels,
     int sample_rate,
     int buffer_size,
+    int precision,
     u_int encoding,
     audio_stream_t *stream
 )
 {
-	float samples_needed;
 	int i;
 
-	samples_needed = ceilf(
-	   (float) milliseconds / 1000 * sample_rate * channels 
+	// TODO - i think this is right but need to spend some more thought on it
+	//
+	//   milliseconds = 2000
+	//   channels = 2
+	//   sample_rate = 1000. That means I get 1000 samples per second
+	//   buffer_size = 1000
+	//   precision = 16
+	//
+	// I need 2000 samples _per_ channel (sample_rate * milliseconds / 1000). 
+	// Therefore I need 4000 samples total (samples_needed)
+	//
+	// each sample is 2 bytes (16 bits - bytes_per_sample = precision / 8),
+	// 
+	// and one buffer can only support 1000 bytes total (buffer_size).
+	// that means there are 500 samples per buffer. (buffer_size / bytes_per_sample)
+	// that means i need 8 buffers (samples_needed / samples_per_buffer)
+	float samples_needed = ceilf(
+	   (float) milliseconds / 1000 * sample_rate * channels
 	);
+	int bytes_per_sample = precision / STREAM_BYTE_SIZE;
+	float samples_per_buffer = ceilf(buffer_size / bytes_per_sample);
+	float buffers_needed = ceilf(samples_needed / samples_per_buffer);
 
 	stream->milliseconds = milliseconds;
 	stream->samples_streamed = 0;
 	stream->channels = channels;
 	stream->encoding = encoding;
 	stream->buffer_count = 0;
-	stream->buffers = malloc(stream->buffer_count * sizeof(audio_buffer_t *));
+	stream->buffers = malloc(buffers_needed * sizeof(audio_buffer_t *));
 	stream->sample_size = samples_needed;
+	stream->precision = precision;
 
 	i = samples_needed;
 	while (i > 0) {
 		audio_buffer_t *buffer = malloc(sizeof(audio_buffer_t));
-		int size = (int) fminf((float) i, (float) buffer_size);
+		// the size of the buffer is samples_per_buffer or whats left
+		int size = (int) fminf((float) i, samples_per_buffer);
+		printf("i is %d / samples_per_buffer is %d / size is %d\n", i, samples_per_buffer, size);
 		buffer->size = size;
-		buffer->data = malloc(sizeof(u_char) * size);
+		printf("ok.. buffer->size is %d\n", buffer->size);
+		buffer->precision = precision;
+		buffer->data = malloc(size);
 		stream->buffers[stream->buffer_count] = buffer;
 		stream->buffer_count++;
 		i = i - size;

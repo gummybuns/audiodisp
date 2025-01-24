@@ -5,6 +5,7 @@
 #include <err.h>
 #include <sys/audioio.h>
 #include <math.h>
+#include <kissfft/kiss_fft.h>
 
 #include "audio_ctrl.h"
 #include "audio_stream.h"

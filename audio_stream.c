@@ -83,26 +83,27 @@ int build_stream(
 	float buffers_needed = ceilf(samples_needed / samples_per_buffer);
 
 	stream->milliseconds = milliseconds;
-	stream->samples_streamed = 0;
 	stream->channels = channels;
 	stream->encoding = encoding;
-	stream->buffer_count = 0;
 	stream->buffers = malloc(buffers_needed * sizeof(audio_buffer_t *));
-	stream->sample_size = samples_needed;
+	stream->total_samples = samples_needed;
 	stream->precision = precision;
+	stream->buffer_count = 0;
+	stream->total_size = 0;
+	stream->samples_streamed = 0;
 
 	i = samples_needed;
 	while (i > 0) {
 		audio_buffer_t *buffer = malloc(sizeof(audio_buffer_t));
 		// the size of the buffer is samples_per_buffer or whats left
 		int size = (int) fminf((float) i, samples_per_buffer);
-		printf("i is %d / samples_per_buffer is %d / size is %d\n", i, samples_per_buffer, size);
 		buffer->size = size;
-		printf("ok.. buffer->size is %d\n", buffer->size);
 		buffer->precision = precision;
+		buffer->samples = size / bytes_per_sample;
 		buffer->data = malloc(size);
 		stream->buffers[stream->buffer_count] = buffer;
 		stream->buffer_count++;
+		stream->total_size += size;
 		i = i - size;
 	}
 

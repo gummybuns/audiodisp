@@ -79,12 +79,12 @@ int main(int argc, char *argv[])
 
 		stream(record_ctrl, &stream1);
 
-		int size = 0;
-		for (int i = 0; i < stream1.buffer_count; i++) {
-			size += stream1.buffers[i]->size;
-		}
 		// it would be nice to have the full size as part of the stream
-		signed char *full_sample = malloc(sizeof(u_char)*size);
+		// TODO there needs to be something else done here, if the precision
+		// is 16 for example, we want short instead of char...
+		// i would like to have a method that copies the data over to the
+		// flattened buffer
+		signed char *full_sample = malloc(stream1.total_size);
 		int li = 0;
 		for (int i = 0; i < stream1.buffer_count; i++) {
 			audio_buffer_t *buffer = stream1.buffers[i];
@@ -96,11 +96,18 @@ int main(int argc, char *argv[])
 			}
 		}
 
+		// TODO - i chose 2000 because that is the number of samples in
+		// 250s of MU-LAW stream. This needs to be dynamically calculated
+		// or i can just leave it at 2000, and we just get calculations
 		int chunk_size = 2000;
 		int pp = 0;
-		for (int i = 0; i < size; i += chunk_size) {
-			int cz = (int) fmin((double) chunk_size, (double) size - i);
-			float rms = calculate_rms(full_sample, i, i+cz);	
+		for (int i = 0; i < stream1.total_size; i += chunk_size) {
+			int z = (int) fmin(
+			    (double) chunk_size,
+			    (double) stream1.total_size - i
+			);
+
+			float rms = calculate_rms(full_sample, i, i+z);	
 			percent = (float) rms / 127 * 100;
 			if (percent >= 0) {
 				draw_length = bar_distance * (percent / (float) 100.0);
@@ -110,9 +117,8 @@ int main(int argc, char *argv[])
 				refresh(); // do i need to refresh?
 				pp++;
 			} else {
+				// TODO think about what i want to happen if something goes wrong
 				endwin();
-				printf("size: %d, rms: %f, chunk_size: %d, start: %d end: %d\n", size, rms, chunk_size, i, i+cz);
-				printf("pp = %d\n", pp);
 				return -1;
 			}
 		}

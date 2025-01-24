@@ -7,10 +7,15 @@
 
 typedef struct audiobuffer {
 	/**
-	 * number of samples in the buffer
-	 * this number is based off the precision
+	 * the total memory size of the buffer
 	 */
 	int size;
+
+	/**
+     * the number of samples in this buffer
+	 * this is a calculation based off the size and precision
+	 */
+	int samples;
 
 	/**
 	 * the number of bits per sample
@@ -46,9 +51,14 @@ typedef struct audiostream {
 	int channels;
 
 	/**
+	 * the total size of all buffers
+	 */
+	 int total_size;
+
+	/**
 	 * the total number of samples across all buffers
 	 */
-	int sample_size;
+	int total_samples;
 
 	/**
 	 * the number of bits per sample
@@ -61,7 +71,7 @@ typedef struct audiostream {
 	u_int encoding;
 
 	/**
-	 * the array of buffers. When build using build_stream() each buffer will
+	 * the array of buffers. When built using build_stream() each buffer will
 	 * be at most buffer_size
 	 */
 	audio_buffer_t **buffers;

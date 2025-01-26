@@ -5,9 +5,11 @@
 #include <err.h>
 #include <sys/audioio.h>
 #include <math.h>
-#include <kissfft/kiss_fft.h>
-// there is also /usr/pkg/include/sndfile.h
-// sndfile.h apparently can convert between the different data structures
+
+// Possibly include fft to transform data to only include human audible spectrum
+// maybe it can be used to eliminate a feedback loop so we can play the audio
+// back that is recorded in real time
+//#include <kissfft/kiss_fft.h>
 
 #include "audio_ctrl.h"
 #include "audio_stream.h"

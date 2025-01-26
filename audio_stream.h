@@ -91,4 +91,5 @@ int build_stream_from_ctrl(audio_ctrl_t ctrl, int ms, audio_stream_t *stream);
 int stream(audio_ctrl_t ctrl, audio_stream_t *stream);
 int clean_buffers(audio_stream_t *stream);
 void print_stream(audio_stream_t stream);
+u_char *flatten_stream(audio_stream_t *stream);
 #endif

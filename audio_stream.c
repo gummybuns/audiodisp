@@ -144,3 +144,18 @@ int clean_buffers(audio_stream_t *stream)
 
 	return 0;
 }
+
+u_char *flatten_stream(audio_stream_t *stream)
+{
+	u_char *flattened = malloc(stream->total_size);
+	int s = 0;
+	for (int i = 0; i < stream->buffer_count; i++) {
+		audio_buffer_t *buffer = stream->buffers[i];
+		for (int j = 0; j < buffer->size; j++) {
+			flattened[s] = buffer->data[j];
+			s++;
+		}
+	}
+
+	return flattened;
+}

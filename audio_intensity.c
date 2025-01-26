@@ -18,7 +18,7 @@
 #define ESC 27
 
 
-float calculate_rms(signed char *data, int start, int end) {
+float rms_mulaw(char *data, int start, int end) {
 	float sum = 0.0;
 	int length = end - start;
 
@@ -29,6 +29,18 @@ float calculate_rms(signed char *data, int start, int end) {
 	return sqrtf((float) sum / (float) length);
 }
 
+// TODO - i think based on whatever the encoding is i need a seaparate method
+// to transform the data before i calculate the rms but im not entirely sure
+// possibly use sndfile to transform for me? idk..
+float calculate_rms_percent(u_char *data, int encoding, int start, int end) {
+	switch(encoding) {
+		case AUDIO_ENCODING_ULAW:
+			return rms_mulaw((char *) data, start, end) / 127 * 100;
+		default:
+			return -1;
+	}
+}
+
 int main(int argc, char *argv[])
 {
 	// drawing stuff
@@ -37,11 +49,10 @@ int main(int argc, char *argv[])
 	int bar_start, bar_end, bar_distance;
 	int draw_length;
 	int keypress;
-	float percent = 0.0;
 
 	// recording stuff
 	char *recording_audio_path;
-	int s_index = 0;
+	int result;
 	audio_ctrl_t record_ctrl;
 	audio_stream_t stream1, stream2;
 
@@ -50,9 +61,17 @@ int main(int argc, char *argv[])
 	}
 
 	recording_audio_path = argv[1];
-	build_audio_ctrl(&record_ctrl, recording_audio_path, AUMODE_RECORD);
-	build_stream_from_ctrl(record_ctrl, STREAM_DURATION, &stream1);
-	
+
+	result = build_audio_ctrl(&record_ctrl, recording_audio_path, AUMODE_RECORD);
+	if (result != 0) {
+		err(result, "Failed to build audio controller");
+	}
+
+	result = build_stream_from_ctrl(record_ctrl, STREAM_DURATION, &stream1);
+	if (result != 0) {
+		err(result, "Failed to build audio stream");
+	}
+
 	initscr();
 	raw();
 	noecho();
@@ -80,44 +99,32 @@ int main(int argc, char *argv[])
 		if (keypress == ESC) break;
 
 		stream(record_ctrl, &stream1);
-
-		// it would be nice to have the full size as part of the stream
-		// TODO there needs to be something else done here, if the precision
-		// is 16 for example, we want short instead of char...
-		// i would like to have a method that copies the data over to the
-		// flattened buffer
-		signed char *full_sample = malloc(stream1.total_size);
-		int li = 0;
-		for (int i = 0; i < stream1.buffer_count; i++) {
-			audio_buffer_t *buffer = stream1.buffers[i];
-
-			for (int j = 0; j < buffer->size; j++) {
-				u_char s = buffer->data[j];
-				full_sample[li] = (signed char)(s > 127 ? s - 256 : s);
-				li++;
-			}
-		}
+		u_char *full_sample = flatten_stream(&stream1);
 
 		// TODO - i chose 2000 because that is the number of samples in
 		// 250s of MU-LAW stream. This needs to be dynamically calculated
 		// or i can just leave it at 2000, and we just get calculations
-		int chunk_size = 2000;
-		int pp = 0;
-		for (int i = 0; i < stream1.total_size; i += chunk_size) {
+		//int chunk_size = 2000;
+		int chunk_size = stream1.total_size;
+		for (int i = 0; i < stream1.total_samples; i += chunk_size) {
 			int z = (int) fmin(
 			    (double) chunk_size,
 			    (double) stream1.total_size - i
 			);
 
-			float rms = calculate_rms(full_sample, i, i+z);	
-			percent = (float) rms / 127 * 100;
+			float percent = calculate_rms_percent(
+			    full_sample,
+			    stream1.encoding,
+			    i,
+			    i+z
+			);	
 			if (percent >= 0) {
 				draw_length = bar_distance * (percent / (float) 100.0);
-				mvhline(2 + x_padding, bar_start, ' ', bar_distance); // is it better to clear the screen?
+				mvhline(2 + x_padding, bar_start, ' ', bar_distance);
 				mvhline(2 + x_padding, bar_start, '=', draw_length);
 				move(1, 0);
-				refresh(); // do i need to refresh?
-				pp++;
+				printw("%f\n", percent);
+				refresh();
 			} else {
 				// TODO think about what i want to happen if something goes wrong
 				endwin();

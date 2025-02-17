@@ -11,7 +11,7 @@ void print_stream(audio_stream_t stream)
 {
 	const char *encoding;
 
-	encoding = get_encoding(stream.encoding);
+	encoding = get_encoding_name(stream.encoding);
 	printf(
 	    "STREAM\n"
 	    "\tmilliseconds:\t\t%d\n"

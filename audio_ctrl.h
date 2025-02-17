@@ -14,6 +14,8 @@
 #define ENC_ULINEAR_BE "ULINEAR_BE"
 #define ENC_AC3 "DOLBY_DIGITAL_AC3"
 
+#define ENC_OPTION_OFFSET 97
+
 typedef struct audioconfig {
 	u_int sample_rate;
 	u_int precision;
@@ -22,18 +24,26 @@ typedef struct audioconfig {
     u_int buffer_size;
 } audio_config_t;
 
+typedef struct encoding_options {
+	int total;
+	audio_encoding_t *encodings;
+} encoding_options_t;
+
 typedef struct audio_controller {
 	char *path;
 	int fd;
 	int mode;
 	audio_config_t config;
 	audio_config_t hw_info;
+	encoding_options_t encoding_options;
 } audio_ctrl_t;
-
 
 int build_audio_ctrl(audio_ctrl_t *ctrl, char *path, int mode);
 void print_ctrl(audio_ctrl_t ctrl);
-const char *get_encoding(u_int encoding);
+void print_encodings(audio_ctrl_t *ctrl);
+int get_max_encoding(audio_ctrl_t ctrl);
+int set_encoding(audio_ctrl_t *ctrl, audio_encoding_t encoding);
+const char *get_encoding_name(u_int encoding);
 const char *get_mode(audio_ctrl_t ctrl);
 
 #endif

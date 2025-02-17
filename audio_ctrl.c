@@ -5,6 +5,7 @@
 #include <sys/audioio.h>
 #include <sys/ioctl.h>
 #include <fcntl.h>
+#include <curses.h>
 
 #include "audio_ctrl.h"
 #include "audio_stream.h"
@@ -16,15 +17,41 @@ const char *get_mode(audio_ctrl_t ctrl)
 	else return NULL;
 }
 
+void print_encodings(audio_ctrl_t *ctrl)
+{
+	audio_encoding_t enc;
+
+	for (int i = 0; i < ctrl->encoding_options.total; i++) {
+		enc = ctrl->encoding_options.encodings[i];
+		printw(
+		    "%c. %s (precision: %d)",
+		    enc.index + ENC_OPTION_OFFSET,
+		    get_encoding_name(enc.encoding),
+			enc.precision
+		);
+
+		if (
+		    enc.encoding == ctrl->config.encoding
+		    && enc.precision == ctrl->config.precision
+		) {
+			printw("*");
+		}
+
+		printw("\n");
+		enc.index++;
+		
+	}
+}
+
 void print_ctrl(audio_ctrl_t ctrl)
 {
 	const char *mode, *config_encoding, *hw_encoding;
 
 	mode = get_mode(ctrl);
-	config_encoding = get_encoding(ctrl.config.encoding);
-	hw_encoding = get_encoding(ctrl.hw_info.encoding);
+	config_encoding = get_encoding_name(ctrl.config.encoding);
+	hw_encoding = get_encoding_name(ctrl.hw_info.encoding);
 
-	printf(
+	printw(
 	  "Audio Controller\n"
 	  "\tDevice:\t\t%s\n"
 	  "\tMode:\t\t%s\n"
@@ -73,6 +100,7 @@ int build_audio_ctrl(audio_ctrl_t *ctrl, char *path, int mode)
 {
 	int open_flag, fd;
 	audio_info_t info, format;
+	audio_encoding_t enc;
 
 	if (mode == AUMODE_PLAY) open_flag = O_WRONLY;
 	else if (mode == AUMODE_RECORD) open_flag = O_RDONLY;
@@ -110,10 +138,61 @@ int build_audio_ctrl(audio_ctrl_t *ctrl, char *path, int mode)
 		return 2;
 	}
 
+	enc.index = 0;
+	ctrl->encoding_options.total = 0;
+	while (ioctl(ctrl->fd, AUDIO_GETENC, &enc) >= 0) {
+		enc.index++;
+		ctrl->encoding_options.total++;
+	}
+
+	ctrl->encoding_options.total -= 1;
+	ctrl->encoding_options.encodings = malloc(
+	    sizeof(audio_encoding_t) * ctrl->encoding_options.total
+	);
+	for (enc.index = 0; enc.index < ctrl->encoding_options.total; enc.index++) {
+		encoding_options_t options = ctrl->encoding_options;
+		audio_encoding_t *encoding = &options.encodings[enc.index];
+		encoding->index = enc.index;
+		ioctl(ctrl->fd, AUDIO_GETENC, encoding);
+	}
+
 	return 0;
 }
 
-const char *get_encoding(u_int encoding)
+int set_encoding(audio_ctrl_t *ctrl, audio_encoding_t encoding)
+{
+	audio_info_t info;
+	if (ioctl(ctrl->fd, AUDIO_GETINFO, &info) < 0) {
+		return -1;
+	}
+
+	if (ctrl->mode == AUMODE_PLAY) {
+		info.play.encoding = encoding.encoding;
+		info.play.precision = encoding.precision;
+	} else if (ctrl->mode == AUMODE_RECORD) {
+		info.record.encoding = encoding.encoding;
+		info.record.precision = encoding.precision;
+	} else {
+		return -2;
+	}
+
+	if (ioctl(ctrl->fd, AUDIO_SETINFO, &info) < 0) {
+		return -3;
+	}
+
+	if (ioctl(ctrl->fd, AUDIO_GETINFO, &info) < 0) {
+		return -1;
+	}
+
+	if (set_config(ctrl->mode, &(ctrl->config), info) != 0) {
+		printf("Failed to set config\n");
+		return -4;
+	}
+
+	return 0;
+}
+
+const char *get_encoding_name(u_int encoding)
 {
 	if (encoding == AUDIO_ENCODING_ULAW) return ENC_MULAW;
 	else if (encoding == AUDIO_ENCODING_ALAW) return ENC_ALAW;

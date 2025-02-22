@@ -20,18 +20,23 @@ void print_stream(audio_stream_t stream)
 	    "\tchannels:\t\t%d\n"
 	    "\tencoding:\t\t%s\n"
 	    "\tprecision:\t\t%d\n"
+	    "\ttotal_size:\t\t%d\n"
+	    "\ttotal_samples:\t\t%d\n"
 	    "\tbuffer_count:\t\t%d\n",
 	    stream.milliseconds,
 	    stream.samples_streamed,
 		stream.channels,
 		encoding,
 		stream.precision,
+	    stream.total_size,
+	    stream.total_samples,
 	    stream.buffer_count
 	);
 	printw("\tBUFFERS\n");
 	for(int i = 0; i < stream.buffer_count; i++) {
 		printw("\t\tbuffer[%d]\n", i);
 		printw("\t\tsize: %d\n", stream.buffers[i]->size);
+		printw("\t\tsamples: %d\n", stream.buffers[i]->samples);
 		printw("\t\tprecision: %d\n", stream.buffers[i]->precision);
 	}
 }
@@ -97,15 +102,15 @@ int build_stream(
 	while (i > 0) {
 		audio_buffer_t *buffer = malloc(sizeof(audio_buffer_t));
 		// the size of the buffer is samples_per_buffer or whats left
-		int size = (int) fminf((float) i, samples_per_buffer);
-		buffer->size = size;
+		int nsamples = (int) fminf((float) i, samples_per_buffer);
+		buffer->size = nsamples * bytes_per_sample;
 		buffer->precision = precision;
-		buffer->samples = size / bytes_per_sample;
-		buffer->data = malloc(size);
+		buffer->samples = nsamples;
+		buffer->data = malloc(buffer->size);
 		stream->buffers[stream->buffer_count] = buffer;
 		stream->buffer_count++;
-		stream->total_size += size;
-		i = i - size;
+		stream->total_size += buffer->size;
+		i = i - nsamples;
 	}
 
 	return 0;

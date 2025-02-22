@@ -77,6 +77,12 @@ typedef struct audiostream {
 	audio_buffer_t **buffers;
 } audio_stream_t;
 
+typedef struct circular_list {
+	int size;
+	audio_stream_t *streams;
+	int start;
+} circular_list_t;
+
 int build_stream(
     int milliseconds,
     int channels,

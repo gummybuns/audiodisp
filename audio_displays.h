@@ -8,9 +8,11 @@
 #define DISPLAY_RECORD 1
 #define DISPLAY_INFO 2
 #define DISPLAY_ENCODING 3
+#define DISPLAY_PLAYBACK 4
 
-unsigned char display_info(audio_ctrl_t ctrl);
-unsigned char display_intensity(audio_ctrl_t record_ctrl, audio_stream_t stream);
-unsigned char  display_encodings(audio_ctrl_t *ctrl);
+unsigned char display_info(audio_ctrl_t ctrl, circular_list_t *slist);
+unsigned char display_intensity(audio_ctrl_t rctrl, circular_list_t *slist);
+unsigned char  display_encodings(audio_ctrl_t *rctrl, audio_ctrl_t *pctrl);
+unsigned char display_playback(audio_ctrl_t ctrl, circular_list_t *slist);
 void display_options();
 #endif

@@ -17,7 +17,7 @@ const char *get_mode(audio_ctrl_t ctrl)
 	else return NULL;
 }
 
-void print_encodings(audio_ctrl_t *ctrl)
+void print_encodings(audio_ctrl_t *ctrl, int offset)
 {
 	audio_encoding_t enc;
 
@@ -25,7 +25,7 @@ void print_encodings(audio_ctrl_t *ctrl)
 		enc = ctrl->encoding_options.encodings[i];
 		printw(
 		    "%c. %s (precision: %d)",
-		    enc.index + ENC_OPTION_OFFSET,
+		    enc.index + ENC_OPTION_OFFSET + offset,
 		    get_encoding_name(enc.encoding),
 			enc.precision
 		);

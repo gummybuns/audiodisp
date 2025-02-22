@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <curses.h>
 #include <math.h>
 #include <sys/audioio.h>
 #include <unistd.h>
@@ -12,7 +13,7 @@ void print_stream(audio_stream_t stream)
 	const char *encoding;
 
 	encoding = get_encoding_name(stream.encoding);
-	printf(
+	printw(
 	    "STREAM\n"
 	    "\tmilliseconds:\t\t%d\n"
 	    "\tsamples_streamed:\t%d\n"
@@ -27,11 +28,11 @@ void print_stream(audio_stream_t stream)
 		stream.precision,
 	    stream.buffer_count
 	);
-	printf("\tBUFFERS\n");
+	printw("\tBUFFERS\n");
 	for(int i = 0; i < stream.buffer_count; i++) {
-		printf("\t\tbuffer[%d]\n", i);
-		printf("\t\tsize: %d\n", stream.buffers[i]->size);
-		printf("\t\tprecision: %d\n", stream.buffers[i]->precision);
+		printw("\t\tbuffer[%d]\n", i);
+		printw("\t\tsize: %d\n", stream.buffers[i]->size);
+		printw("\t\tprecision: %d\n", stream.buffers[i]->precision);
 	}
 }
 int build_stream_from_ctrl(audio_ctrl_t ctrl, int ms, audio_stream_t *stream)

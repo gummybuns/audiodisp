@@ -6,21 +6,18 @@
 #include <sys/audioio.h>
 #include <math.h>
 
-// Possibly include fft to transform data to only include human audible spectrum
-// maybe it can be used to eliminate a feedback loop so we can play the audio
-// back that is recorded in real time
-//#include <kissfft/kiss_fft.h>
-
 #include "audio_ctrl.h"
 #include "audio_stream.h"
 #include "audio_displays.h"
 
 #define STREAM_DURATION 250
-#define ESC 27
+#define PLAY_DURATION 5000
+#define STREAMS_NEEDED (PLAY_DURATION / STREAM_DURATION)
 
 #define mu 1E-11
 #define DELAY_LINE
 #define NUM_SECTIONS 128
+
 
 
 // i think what i want this to do for now
@@ -33,24 +30,32 @@ int main(int argc, char *argv[])
 {
 	u_char option;
 	char *recording_audio_path;
+	char *play_audio_path;
 	int result;
 	audio_ctrl_t record_ctrl;
-	audio_stream_t stream1, stream2;
+	audio_ctrl_t play_ctrl;
+	audio_stream_t record_streams[STREAMS_NEEDED];
+	circular_list_t stream_list;
 
-	if (argc <= 1) {
-		err(1, "Specify a recording audio device");
+	stream_list.size = STREAMS_NEEDED;
+	stream_list.start = 0;
+	stream_list.streams = record_streams;
+
+	if (argc <= 2) {
+		err(1, "Specify a recording audio device and playback devuce");
 	}
 
 	recording_audio_path = argv[1];
+	play_audio_path = argv[2];
 
 	result = build_audio_ctrl(&record_ctrl, recording_audio_path, AUMODE_RECORD);
 	if (result != 0) {
 		err(result, "Failed to build audio controller");
 	}
 
-	result = build_stream_from_ctrl(record_ctrl, STREAM_DURATION, &stream1);
+	result = build_audio_ctrl(&play_ctrl, play_audio_path, AUMODE_PLAY);
 	if (result != 0) {
-		err(result, "Failed to build audio stream");
+		err(result, "Failed to build audio controller");
 	}
 
 	initscr();
@@ -62,14 +67,44 @@ int main(int argc, char *argv[])
 		// TODO: displaying the options at the bottom seems to add some delay
 		// when switching windows.. im guessing because it has to scroll to
 		// the very bottom?? seems kinda crazy
+		// TODO: memory leak - i need to clean up the buffers before i call
+		// build_stream_from_ctrl
 		display_options();
 
 		if (option == DISPLAY_RECORD) {
-			option = display_intensity(record_ctrl, stream1);
+			stream_list.start = 0;
+
+			for (int i = 0; i < stream_list.size; i++) {
+				result = build_stream_from_ctrl(
+				    record_ctrl,
+				    STREAM_DURATION,
+				    &stream_list.streams[i]
+				);
+				if (result != 0) {
+					err(result, "Failed to build audio stream");
+				}
+			}
+
+			option = display_intensity(record_ctrl, &stream_list);
 		} else if (option == DISPLAY_INFO) {
-			option = display_info(record_ctrl);
+			stream_list.start = 0;
+
+			// TODO - editing the encoding needs to reset streams instead
+			for (int i = 0; i < stream_list.size; i++) {
+				result = build_stream_from_ctrl(
+				    record_ctrl,
+				    STREAM_DURATION,
+				    &stream_list.streams[i]
+				);
+				if (result != 0) {
+					err(result, "Failed to build audio stream");
+				}
+			}
+			option = display_info(record_ctrl, &stream_list);
 		} else if (option == DISPLAY_ENCODING) {
-			option = display_encodings(&record_ctrl);
+			option = display_encodings(&record_ctrl, &play_ctrl);
+		} else if (option == DISPLAY_PLAYBACK) {
+			option = display_playback(play_ctrl, &stream_list);
 		} else {
 			break;
 		}
@@ -77,6 +112,7 @@ int main(int argc, char *argv[])
 	}
 
 	endwin();
-	clean_buffers(&stream1);
+
+	// todo clean up the buffers in the stream_list
 	return 0;
 }

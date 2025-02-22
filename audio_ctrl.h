@@ -44,6 +44,5 @@ void print_encodings(audio_ctrl_t * ctrl, int offset);
 int get_max_encoding(audio_ctrl_t ctrl);
 int set_encoding(audio_ctrl_t * ctrl, audio_encoding_t encoding);
 const char *get_encoding_name(u_int encoding);
-const char *get_mode(audio_ctrl_t ctrl);
 
 #endif

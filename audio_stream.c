@@ -1,18 +1,25 @@
-#include <stdio.h>
-#include <stdlib.h>
+#include <sys/audioio.h>
+
 #include <curses.h>
 #include <math.h>
-#include <sys/audioio.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
 
-#include "audio_stream.h"
 #include "audio_ctrl.h"
+#include "audio_stream.h"
 
-void print_stream(audio_stream_t stream)
+/*
+ * Print details about the audio stream
+ */
+void
+print_stream(audio_stream_t stream)
 {
+	int i;
 	const char *encoding;
 
 	encoding = get_encoding_name(stream.encoding);
+
 	printw(
 	    "STREAM\n"
 	    "\tmilliseconds:\t\t%d\n"
@@ -25,22 +32,26 @@ void print_stream(audio_stream_t stream)
 	    "\tbuffer_count:\t\t%d\n",
 	    stream.milliseconds,
 	    stream.samples_streamed,
-		stream.channels,
-		encoding,
-		stream.precision,
+	    stream.channels,
+	    encoding,
+	    stream.precision,
 	    stream.total_size,
 	    stream.total_samples,
-	    stream.buffer_count
-	);
+	    stream.buffer_count);
 	printw("\tBUFFERS\n");
-	for(int i = 0; i < stream.buffer_count; i++) {
+	for (i = 0; i < stream.buffer_count; i++){
 		printw("\t\tbuffer[%d]\n", i);
 		printw("\t\tsize: %d\n", stream.buffers[i]->size);
 		printw("\t\tsamples: %d\n", stream.buffers[i]->samples);
 		printw("\t\tprecision: %d\n", stream.buffers[i]->precision);
 	}
 }
-int build_stream_from_ctrl(audio_ctrl_t ctrl, int ms, audio_stream_t *stream)
+
+/*
+ * Build an audio stream from the audio controller
+ */
+int
+build_stream_from_ctrl(audio_ctrl_t ctrl, int ms, audio_stream_t *stream)
 {
 	return build_stream(
 	    ms,
@@ -49,11 +60,30 @@ int build_stream_from_ctrl(audio_ctrl_t ctrl, int ms, audio_stream_t *stream)
 	    ctrl.config.buffer_size,
 	    ctrl.config.precision,
 	    ctrl.config.encoding,
-	    stream
-	);
+	    stream);
 }
 
-int build_stream(
+/* 
+ * Build an audio stream
+ *
+ * As an example:
+ * milliseconds = 2000
+ * channels = 2
+ * sample_rate = 1000. That means I get 1000 samples per second
+ * buffer_size = 1000
+ * precision = 16
+ *
+ * I need 2000 samples _per_ channel (sample_rate * milliseconds / 1000).
+ * Therefore I need 4000 samples total (samples_needed)
+ *
+ * each sample is 2 bytes (16 bits - bytes_per_sample = precision / 8),
+ *
+ * and one buffer can only support 1000 bytes total (buffer_size).
+ * that means there are 500 samples per buffer.
+ * that means i need 8 buffers (samples_needed / samples_per_buffer)
+ */
+int
+build_stream(
     int milliseconds,
     int channels,
     int sample_rate,
@@ -64,29 +94,18 @@ int build_stream(
 )
 {
 	int i;
+	int bytes_per_sample;
+	int nsamples;
+	float samples_needed;
+	float samples_per_buffer;
+	float buffers_needed;
+	audio_buffer_t *buffer;
 
-	// TODO - i think this is right but need to spend some more thought on it
-	//
-	//   milliseconds = 2000
-	//   channels = 2
-	//   sample_rate = 1000. That means I get 1000 samples per second
-	//   buffer_size = 1000
-	//   precision = 16
-	//
-	// I need 2000 samples _per_ channel (sample_rate * milliseconds / 1000). 
-	// Therefore I need 4000 samples total (samples_needed)
-	//
-	// each sample is 2 bytes (16 bits - bytes_per_sample = precision / 8),
-	// 
-	// and one buffer can only support 1000 bytes total (buffer_size).
-	// that means there are 500 samples per buffer. (buffer_size / bytes_per_sample)
-	// that means i need 8 buffers (samples_needed / samples_per_buffer)
-	float samples_needed = ceilf(
-	   (float) milliseconds / 1000 * sample_rate * channels
-	);
-	int bytes_per_sample = precision / STREAM_BYTE_SIZE;
-	float samples_per_buffer = ceilf(buffer_size / bytes_per_sample);
-	float buffers_needed = ceilf(samples_needed / samples_per_buffer);
+	samples_needed = ceilf(
+	    (float) milliseconds / 1000 * sample_rate * channels);
+	bytes_per_sample = precision / STREAM_BYTE_SIZE;
+	samples_per_buffer = ceilf(buffer_size / bytes_per_sample);
+	buffers_needed = ceilf(samples_needed / samples_per_buffer);
 
 	stream->milliseconds = milliseconds;
 	stream->channels = channels;
@@ -100,9 +119,11 @@ int build_stream(
 
 	i = samples_needed;
 	while (i > 0) {
-		audio_buffer_t *buffer = malloc(sizeof(audio_buffer_t));
-		// the size of the buffer is samples_per_buffer or whats left
-		int nsamples = (int) fminf((float) i, samples_per_buffer);
+		buffer = malloc(sizeof(audio_buffer_t));
+
+		/* the size of the buffer is samples_per_buffer or whats left */
+		nsamples = (int)fminf((float)i, samples_per_buffer);
+
 		buffer->size = nsamples * bytes_per_sample;
 		buffer->precision = precision;
 		buffer->samples = nsamples;
@@ -116,14 +137,19 @@ int build_stream(
 	return 0;
 }
 
-int stream(audio_ctrl_t ctrl, audio_stream_t *stream)
+/*
+ * Record or Play the audio stream based on the audio controller mode
+ *
+ * TODO: consider validations to ensure the stream + ctrl have the same
+ * endoding
+ */
+int
+stream(audio_ctrl_t ctrl, audio_stream_t *stream)
 {
-	int io_count = 0;
+	int i, io_count;
+	io_count = 0;
 
-	// TODO - i think i need validations here to make sure that the encodings
-	// match? what else??
-
-	for (int i = 0; i < stream->buffer_count; i++) {
+	for (i = 0; i < stream->buffer_count; i++){
 		audio_buffer_t *buffer = stream->buffers[i];
 
 		if (ctrl.mode == AUMODE_RECORD) {
@@ -140,9 +166,15 @@ int stream(audio_ctrl_t ctrl, audio_stream_t *stream)
 	}
 }
 
-int clean_buffers(audio_stream_t *stream)
+/*
+ * Free up all buffers on the stream
+ */
+int
+clean_buffers(audio_stream_t *stream)
 {
-	for (int i = 0; i < stream->buffer_count; i++) {
+	int i;
+
+	for (i = 0; i < stream->buffer_count; i++){
 		free(stream->buffers[i]->data);
 		free(stream->buffers[i]);
 	}
@@ -151,13 +183,20 @@ int clean_buffers(audio_stream_t *stream)
 	return 0;
 }
 
-u_char *flatten_stream(audio_stream_t *stream)
+/*
+ * Convert all buffers on a stream into a single array
+ */
+u_char *
+flatten_stream(audio_stream_t *stream)
 {
-	u_char *flattened = malloc(stream->total_size);
-	int s = 0;
-	for (int i = 0; i < stream->buffer_count; i++) {
+	int i, j, s;
+	u_char *flattened;
+
+	flattened = malloc(stream->total_size);
+	s = 0;
+	for (i = 0; i < stream->buffer_count; i++){
 		audio_buffer_t *buffer = stream->buffers[i];
-		for (int j = 0; j < buffer->size; j++) {
+		for (j = 0; j < buffer->size; j++){
 			flattened[s] = buffer->data[j];
 			s++;
 		}

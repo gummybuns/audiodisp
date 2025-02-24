@@ -1,6 +1,8 @@
 #ifndef AUDIO_CTRL_H
 #define AUDIO_CTRL_H
 
+#include <sys/audioio.h>
+
 #define CTRL_MODE_PLAY "PLAY"
 #define CTRL_MODE_RECORD "RECORD"
 

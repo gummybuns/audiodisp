@@ -24,3 +24,5 @@ bin/*
 *.so.*
 *.exe
 *.out
+
+*.BAK

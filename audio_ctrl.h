@@ -6,6 +6,9 @@
 #define CTRL_MODE_PLAY "PLAY"
 #define CTRL_MODE_RECORD "RECORD"
 
+#define CTRL_CFG_PAUSE 1
+#define CTRL_CFG_PLAY 0
+
 #define ENC_MULAW "MU-LAW"
 #define ENC_ALAW "A-LAW"
 #define ENC_SLINEAR "SLINEAR"
@@ -19,11 +22,12 @@
 #define ENC_OPTION_OFFSET 97
 
 typedef struct audio_config_t {
-	unsigned int buffer_size;
-	unsigned int channels;
-	unsigned int encoding;
-	unsigned int precision;
-	unsigned int sample_rate;
+	u_int buffer_size;
+	u_int channels;
+	u_int encoding;
+	u_int precision;
+	u_int sample_rate;
+	u_int pause;
 } audio_config_t;
 
 typedef struct encoding_options_t {
@@ -40,11 +44,11 @@ typedef struct audio_ctrl_t {
 	char *path;
 } audio_ctrl_t;
 
-int build_audio_ctrl(audio_ctrl_t * ctrl, char *path, int mode);
+int build_audio_ctrl(audio_ctrl_t *ctrl, char *path, int mode);
 void print_ctrl(audio_ctrl_t ctrl);
-void print_encodings(audio_ctrl_t * ctrl, int offset);
+void print_encodings(audio_ctrl_t *ctrl, int offset);
 int get_max_encoding(audio_ctrl_t ctrl);
-int set_encoding(audio_ctrl_t * ctrl, audio_encoding_t encoding);
-const char *get_encoding_name(u_int encoding);
+int update_ctrl(audio_ctrl_t *ctrl);
+const char *get_encoding_name(int encoding);
 
 #endif

@@ -10,9 +10,9 @@
 #define DISPLAY_ENCODING 3
 #define DISPLAY_PLAYBACK 4
 
-unsigned char display_info(audio_ctrl_t ctrl, circular_list_t * slist);
-unsigned char display_intensity(audio_ctrl_t rctrl, circular_list_t * slist);
-unsigned char display_encodings(audio_ctrl_t * rctrl, audio_ctrl_t * pctrl);
-unsigned char display_playback(audio_ctrl_t ctrl, circular_list_t * slist);
-void display_options();
+char display_info(audio_ctrl_t ctrl, circular_list_t * slist);
+char display_intensity(audio_ctrl_t rctrl, circular_list_t * slist);
+char display_encodings(audio_ctrl_t * rctrl, audio_ctrl_t * pctrl);
+char display_playback(audio_ctrl_t ctrl, circular_list_t * slist);
+void display_options(void);
 #endif

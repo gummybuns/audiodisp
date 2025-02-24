@@ -25,4 +25,8 @@ bin/*
 *.exe
 *.out
 
+.gdbinit
 *.BAK
+
+*.html1
+audiodisp

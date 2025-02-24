@@ -15,10 +15,10 @@
 void
 print_stream(audio_stream_t stream)
 {
-	int i;
+	u_int i;
 	const char *encoding;
 
-	encoding = get_encoding_name(stream.encoding);
+	encoding = get_encoding_name((int)stream.encoding);
 
 	printw(
 	    "STREAM\n"
@@ -51,7 +51,7 @@ print_stream(audio_stream_t stream)
  * Build an audio stream from the audio controller
  */
 int
-build_stream_from_ctrl(audio_ctrl_t ctrl, int ms, audio_stream_t *stream)
+build_stream_from_ctrl(audio_ctrl_t ctrl, u_int ms, audio_stream_t *stream)
 {
 	return build_stream(
 	    ms,
@@ -84,45 +84,46 @@ build_stream_from_ctrl(audio_ctrl_t ctrl, int ms, audio_stream_t *stream)
  */
 int
 build_stream(
-    int milliseconds,
-    int channels,
-    int sample_rate,
-    int buffer_size,
-    int precision,
+    u_int milliseconds,
+    u_int channels,
+    u_int sample_rate,
+    u_int buffer_size,
+    u_int precision,
     u_int encoding,
     audio_stream_t *stream
 )
 {
-	int i;
-	int bytes_per_sample;
-	int nsamples;
+	u_int i;
+	u_int bytes_per_sample;
+	u_int nsamples;
 	float samples_needed;
 	float samples_per_buffer;
 	float buffers_needed;
 	audio_buffer_t *buffer;
 
 	samples_needed = ceilf(
-	    (float) milliseconds / 1000 * sample_rate * channels);
+	    (float)milliseconds / 1000 * (float)sample_rate * (float)channels);
 	bytes_per_sample = precision / STREAM_BYTE_SIZE;
-	samples_per_buffer = ceilf(buffer_size / bytes_per_sample);
+	samples_per_buffer = ceilf((float)buffer_size / (float)bytes_per_sample);
 	buffers_needed = ceilf(samples_needed / samples_per_buffer);
+
 
 	stream->milliseconds = milliseconds;
 	stream->channels = channels;
 	stream->encoding = encoding;
-	stream->buffers = malloc(buffers_needed * sizeof(audio_buffer_t *));
-	stream->total_samples = samples_needed;
+	stream->buffers = malloc((size_t)buffers_needed * sizeof(audio_buffer_t *));
+	stream->total_samples = (u_int)samples_needed;
 	stream->precision = precision;
 	stream->buffer_count = 0;
 	stream->total_size = 0;
 	stream->samples_streamed = 0;
 
-	i = samples_needed;
+	i = (u_int)samples_needed;
 	while (i > 0) {
 		buffer = malloc(sizeof(audio_buffer_t));
 
 		/* the size of the buffer is samples_per_buffer or whats left */
-		nsamples = (int)fminf((float)i, samples_per_buffer);
+		nsamples = (u_int)fminf((float)i, samples_per_buffer);
 
 		buffer->size = nsamples * bytes_per_sample;
 		buffer->precision = precision;
@@ -146,7 +147,8 @@ build_stream(
 int
 stream(audio_ctrl_t ctrl, audio_stream_t *stream)
 {
-	int i, io_count;
+	u_int i;
+	ssize_t io_count;
 	io_count = 0;
 
 	for (i = 0; i < stream->buffer_count; i++){
@@ -164,6 +166,8 @@ stream(audio_ctrl_t ctrl, audio_stream_t *stream)
 		}
 		stream->samples_streamed += buffer->size;
 	}
+
+	return 0;
 }
 
 /*
@@ -172,7 +176,7 @@ stream(audio_ctrl_t ctrl, audio_stream_t *stream)
 int
 clean_buffers(audio_stream_t *stream)
 {
-	int i;
+	u_int i;
 
 	for (i = 0; i < stream->buffer_count; i++){
 		free(stream->buffers[i]->data);
@@ -189,7 +193,7 @@ clean_buffers(audio_stream_t *stream)
 u_char *
 flatten_stream(audio_stream_t *stream)
 {
-	int i, j, s;
+	u_int i, j, s;
 	u_char *flattened;
 
 	flattened = malloc(stream->total_size);

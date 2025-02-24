@@ -14,9 +14,9 @@
  * Calculate the rms of char data
  */
 static float
-rms8(char *data, int start, int end)
+rms8(char *data, u_int start, u_int end)
 {
-	int i, length;
+	u_int i, length;
 	float sum;
 
 	sum = 0.0;
@@ -33,9 +33,9 @@ rms8(char *data, int start, int end)
  * Calculate the rms of short data
  */
 static float
-rms16(short *data, int start, int end)
+rms16(short *data, u_int start, u_int end)
 {
-	int i, length;
+	u_int i, length;
 	float sum;
 
 	sum = 0.0;
@@ -52,9 +52,9 @@ rms16(short *data, int start, int end)
  * Calculate the rms of float data
  */
 static float
-rms32(float *data, int start, int end)
+rms32(float *data, u_int start, u_int end)
 {
-	int i, length;
+	u_int i, length;
 	float sum;
 
 	sum = 0.0;
@@ -71,7 +71,7 @@ rms32(float *data, int start, int end)
  * Calculate the rms of for a chunk of audio data
  */
 static float
-calculate_rms_percent(u_char *data, int precision, int start, int end)
+calculate_rms_percent(u_char *data, u_int precision, u_int start, u_int end)
 {
 	switch (precision) {
 	case 8:
@@ -80,14 +80,15 @@ calculate_rms_percent(u_char *data, int precision, int start, int end)
 		return rms16((short *)data, start, end) / SHRT_MAX * 100;
 	case 32:
 		return rms32((float *)data, start, end) / FLT_MAX * 100;
-
+	default:
+		return -1;
 	}
 }
 
 /*
  * Check if the user pressed any of the navigation options
  */
-int
+static char
 check_options(int keypress)
 {
 	if (keypress == 'I')
@@ -110,21 +111,22 @@ check_options(int keypress)
  * Wait for a user to press one of navigation options. Returns the pressed
  * navigation option so the main routine can render the next screen
  */
-u_char
+char
 display_info(audio_ctrl_t ctrl, circular_list_t *stream_list)
 {
-	u_char keypress;
-	int option;
+	char keypress;
+	char option;
 
 	move(0, 0);
 	nodelay(stdscr, FALSE);
 	print_ctrl(ctrl);
 	print_stream(stream_list->streams[0]);
 	while (1) {
-		keypress = getch();
+		keypress = (char)getch();
 		option = check_options(keypress);
-		if (option != 0 && option != DISPLAY_INFO)
+		if (option != 0 && option != DISPLAY_INFO) {
 			return option;
+		}
 	}
 }
 
@@ -135,11 +137,11 @@ display_info(audio_ctrl_t ctrl, circular_list_t *stream_list)
  * Wait for a user to press one of navigation options. Returns the pressed
  * navigation option so the main routine can render the next screen
  */
-u_char
+char
 display_encodings(audio_ctrl_t *rctrl, audio_ctrl_t *pctrl)
 {
-	u_char keypress;
-	int option;
+	char keypress;
+	char option;
 	int index, pmax, rmax;
 	int res;
 	audio_encoding_t encoding;
@@ -159,7 +161,7 @@ display_encodings(audio_ctrl_t *rctrl, audio_ctrl_t *pctrl)
 		print_encodings(pctrl, rmax);
 
 		refresh();
-		keypress = getch();
+		keypress = (char)getch();
 		option = check_options(keypress);
 
 		if (option != 0 && option != DISPLAY_ENCODING)
@@ -172,8 +174,11 @@ display_encodings(audio_ctrl_t *rctrl, audio_ctrl_t *pctrl)
 			printw("TRYING TO UPDATE ENCODING\n");
 			index = keypress - ENC_OPTION_OFFSET;
 			encoding = rctrl->encoding_options.encodings[index];
+			rctrl->config.precision = (u_int)encoding.precision;
+			rctrl->config.encoding = (u_int)encoding.encoding;
+
 			/* TODO error handling for set encoding */
-			res = set_encoding(rctrl, encoding);
+			res = update_ctrl(rctrl);
 			printw("RESULT IS %d\n", res);
 		}
 		if (
@@ -183,8 +188,11 @@ display_encodings(audio_ctrl_t *rctrl, audio_ctrl_t *pctrl)
 			printw("TRYING TO UPDATE ENCODING\n");
 			index = keypress - ENC_OPTION_OFFSET - rmax;
 			encoding = pctrl->encoding_options.encodings[index];
+			pctrl->config.precision = (u_int)encoding.precision;
+			pctrl->config.encoding = (u_int)encoding.encoding;
+
 			/* TODO error handling for set encoding */
-			res = set_encoding(pctrl, encoding);
+			res = update_ctrl(pctrl);
 			printw("RESULT IS %d\n", res);
 		}
 	}
@@ -196,13 +204,13 @@ display_encodings(audio_ctrl_t *rctrl, audio_ctrl_t *pctrl)
  * Wait for a user to press one of navigation options. Returns the pressed
  * navigation option so the main routine can render the next screen
  */
-u_char
+char
 display_playback(audio_ctrl_t play_ctrl, circular_list_t *stream_list)
 {
-	u_char keypress;
-	u_char option;
-	int i;
-	int playing;
+	char keypress;
+	char option;
+	u_int i;
+	u_int pause;
 	audio_stream_t audio_stream;
 
 	mvprintw(0, 0, "Playing last 5 seconds of audio\n");
@@ -211,11 +219,17 @@ display_playback(audio_ctrl_t play_ctrl, circular_list_t *stream_list)
 
 	nodelay(stdscr, TRUE);
 
-	playing = 0;
+	pause = 0;
 	i = stream_list->start;
 
+	do {
+		audio_stream = stream_list->streams[i];
+		stream(play_ctrl, &audio_stream);
+		i = (i + 1) % stream_list->size;
+	} while(i != stream_list->start);
+
 	while (1) {
-		keypress = getch();
+		keypress = (char)getch();
 		option = check_options(keypress);
 		if (option != 0 && option != DISPLAY_PLAYBACK) {
 			return option;
@@ -224,20 +238,17 @@ display_playback(audio_ctrl_t play_ctrl, circular_list_t *stream_list)
 		refresh();
 
 		if (keypress == SPACE) {
-			playing ^= 1;
-			printw("UPDATING playing to %d\n", playing);
+			pause ^= 1;
+			play_ctrl.config.pause = pause;
+			if (update_ctrl(&play_ctrl) != 0) {
+				/* handle failures */
+				printw("Failed to update pause state\n");
+			}
+			print_ctrl(play_ctrl);
+			move(3,0);
 		} else if (keypress == ENTER) {
-			playing = 1;
 			i = stream_list->start;
-		}
-		if (playing > 0) {
-			audio_stream = stream_list->streams[i];
-			stream(play_ctrl, &audio_stream);
-			printw("Finished playing stream %d\n", i);
-			i = (i + 1) % stream_list->size;
-		}
-		if (i == stream_list->start) {
-			playing = 0;
+			// todo - need to flush and restart everything
 		}
 	}
 }
@@ -250,21 +261,21 @@ display_playback(audio_ctrl_t play_ctrl, circular_list_t *stream_list)
  * Wait for a user to press one of navigation options. Returns the pressed
  * navigation option so the main routine can render the next screen
  */
-u_char
+char
 display_intensity(audio_ctrl_t record_ctrl, circular_list_t *stream_list)
 {
+	char option;
+	char keypress;
+	u_int chunk_size;
+	u_int count, i, si, z;
 	int row, col;
 	int x_padding, y_padding;
 	int bar_start, bar_end, bar_distance;
 	int draw_length;
-	int option;
-	int count, i, si, z;
-	int chunk_size;
 	float percent;
 	audio_stream_t audio_stream;
 	u_char *full_sample;
 
-	u_char keypress;
 
 	getmaxyx(stdscr, row, col);
 	y_padding = col / 10;
@@ -274,9 +285,9 @@ display_intensity(audio_ctrl_t record_ctrl, circular_list_t *stream_list)
 	bar_distance = bar_end - bar_start;
 
 	mvprintw(0, 0, "Measure Mic Intensity\n");
-	mvprintw(3 + x_padding, bar_start, "0\%");
-	mvprintw(3 + x_padding, bar_start + bar_distance / 2, "50\%");
-	mvprintw(3 + x_padding, bar_start + bar_distance - 3, "100\%");
+	mvprintw(3 + x_padding, bar_start, "0%%");
+	mvprintw(3 + x_padding, bar_start + bar_distance / 2, "50%%");
+	mvprintw(3 + x_padding, bar_start + bar_distance - 3, "100%%");
 	move(2 * x_padding, 0);
 	refresh();
 
@@ -291,7 +302,7 @@ display_intensity(audio_ctrl_t record_ctrl, circular_list_t *stream_list)
 
 		chunk_size = audio_stream.total_size;
 		for (i = 0; i < audio_stream.total_samples; i += chunk_size){
-			z = (int)fmin(
+			z = (u_int)fmin(
 			    (double)chunk_size,
 			    (double)audio_stream.total_size - i
 			);
@@ -303,7 +314,9 @@ display_intensity(audio_ctrl_t record_ctrl, circular_list_t *stream_list)
 			    i + z
 			);
 			if (percent >= 0) {
-				draw_length = bar_distance * (percent / (float)100.0);
+				draw_length = (int)(
+				    (float)bar_distance * (percent / (float)100.0)
+				);
 				mvhline(2 + x_padding, bar_start, ' ', bar_distance);
 				mvhline(2 + x_padding, bar_start, '=', draw_length);
 				move(1, 0);
@@ -318,7 +331,7 @@ display_intensity(audio_ctrl_t record_ctrl, circular_list_t *stream_list)
 			}
 		}
 
-		keypress = getch();
+		keypress = (char)getch();
 		option = check_options(keypress);
 		if (option != 0 && option != DISPLAY_RECORD)
 			return option;
@@ -352,10 +365,10 @@ display_intensity(audio_ctrl_t record_ctrl, circular_list_t *stream_list)
  * Renders the nav options at the bottom of the screen for the user to see
  */
 void
-display_options()
+display_options(void)
 {
-	int row, col;
-	getmaxyx(stdscr, row, col);
+	int row;
+	row = getmaxy(stdscr);
 	mvprintw(row - 1, 0, "OPTIONS: ");
 	printw("R: RECORD / P: PLAY / I: INFO / E: ENCODINGS / Q: QUIT");
 	refresh();

@@ -50,12 +50,12 @@ int main(int argc, char *argv[])
 
 	result = build_audio_ctrl(&record_ctrl, recording_audio_path, AUMODE_RECORD);
 	if (result != 0) {
-		err(result, "Failed to build audio controller");
+		err(result, "Failed to build record audio controller %d", result);
 	}
 
 	result = build_audio_ctrl(&play_ctrl, play_audio_path, AUMODE_PLAY);
 	if (result != 0) {
-		err(result, "Failed to build audio controller");
+		err(result, "Failed to build play audio controller %d", result);
 	}
 
 	initscr();
@@ -104,6 +104,7 @@ int main(int argc, char *argv[])
 		} else if (option == DISPLAY_ENCODING) {
 			option = display_encodings(&record_ctrl, &play_ctrl);
 		} else if (option == DISPLAY_PLAYBACK) {
+			// TODO - if i change the encoding i should clear the list too
 			option = display_playback(play_ctrl, &stream_list);
 		} else {
 			break;

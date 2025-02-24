@@ -42,8 +42,8 @@ print_encodings(audio_ctrl_t *ctrl, int offset)
 		       get_encoding_name(enc.encoding),
 		       enc.precision);
 
-		if (enc.encoding == ctrl->config.encoding
-		    && enc.precision == ctrl->config.precision) {
+		if ((u_int)enc.encoding == ctrl->config.encoding
+		    && (u_int)enc.precision == ctrl->config.precision) {
 			printw("*");
 		}
 		printw("\n");
@@ -60,8 +60,8 @@ print_ctrl(audio_ctrl_t ctrl)
 	const char *mode, *config_encoding, *hw_encoding;
 
 	mode = get_mode(ctrl);
-	config_encoding = get_encoding_name(ctrl.config.encoding);
-	hw_encoding = get_encoding_name(ctrl.hw_info.encoding);
+	config_encoding = get_encoding_name((int)ctrl.config.encoding);
+	hw_encoding = get_encoding_name((int)ctrl.hw_info.encoding);
 
 	printw(
 	    "Audio Controller\n"
@@ -73,6 +73,7 @@ print_ctrl(audio_ctrl_t ctrl)
 	    "\t\tprecision:\t\t%d\n"
 	    "\t\tchannels:\t\t%d\n"
 	    "\t\tencoding:\t\t%s\n"
+	    "\t\tpause:\t\t\t%d\n"
 	    "\tHardware Information:\n"
 	    "\t\tbuffer_size:\t\t%d\n"
 	    "\t\tsample_rate:\t\t%d\n"
@@ -86,6 +87,7 @@ print_ctrl(audio_ctrl_t ctrl)
 	    ctrl.config.precision,
 	    ctrl.config.channels,
 	    config_encoding,
+	    ctrl.config.pause,
 	    ctrl.hw_info.buffer_size,
 	    ctrl.hw_info.sample_rate,
 	    ctrl.hw_info.precision,
@@ -108,6 +110,7 @@ set_config(int mode, audio_config_t *config, audio_info_t info)
 	config->precision = prinfo.precision;
 	config->channels = prinfo.channels;
 	config->encoding = prinfo.encoding;
+	config->pause = prinfo.pause;
 
 	return 0;
 }
@@ -167,7 +170,7 @@ build_audio_ctrl(audio_ctrl_t *ctrl, char *path, int mode)
 
 	ctrl->encoding_options.total -= 1;
 	ctrl->encoding_options.encodings = malloc(
-	    sizeof(audio_encoding_t) * ctrl->encoding_options.total);
+	    sizeof(audio_encoding_t) * (u_long)ctrl->encoding_options.total);
 
 	for (enc.index = 0; enc.index < ctrl->encoding_options.total; enc.index++) {
 		encoding_options_t options = ctrl->encoding_options;
@@ -180,43 +183,47 @@ build_audio_ctrl(audio_ctrl_t *ctrl, char *path, int mode)
 }
 
 /*
- * Update the audio controller based on the specified encoding
+ * Update the audio device to reflect the controllers configurations
  */
 int
-set_encoding(audio_ctrl_t *ctrl, audio_encoding_t encoding)
+update_ctrl(audio_ctrl_t *ctrl)
 {
 	audio_info_t info;
-	if (ioctl(ctrl->fd, AUDIO_GETINFO, &info) < 0) {
+	struct audio_prinfo *prinfo;
+
+	if (ioctl(ctrl->fd, AUDIO_GETINFO, &info) == -1) {
 		return -1;
 	}
-	if (ctrl->mode == AUMODE_PLAY) {
-		info.play.encoding = encoding.encoding;
-		info.play.precision = encoding.precision;
-	} else if (ctrl->mode == AUMODE_RECORD) {
-		info.record.encoding = encoding.encoding;
-		info.record.precision = encoding.precision;
-	} else {
-		return -2;
-	}
 
-	if (ioctl(ctrl->fd, AUDIO_SETINFO, &info) < 0) {
+	prinfo = ctrl->mode == AUMODE_PLAY ? &(info.play) : &(info.record);
+
+	prinfo->pause = (u_char)ctrl->config.pause;
+	prinfo->buffer_size = ctrl->config.buffer_size;
+	prinfo->sample_rate = ctrl->config.sample_rate;
+	prinfo->precision = ctrl->config.precision;
+	prinfo->channels = ctrl->config.channels;
+	prinfo->encoding = ctrl->config.encoding;
+
+	if (ioctl(ctrl->fd, AUDIO_SETINFO, &info) == -1) {
 		return -3;
 	}
-	if (ioctl(ctrl->fd, AUDIO_GETINFO, &info) < 0) {
+	if (ioctl(ctrl->fd, AUDIO_GETINFO, &info) == -1) {
 		return -1;
 	}
 	if (set_config(ctrl->mode, &(ctrl->config), info) != 0) {
 		printf("Failed to set config\n");
 		return -4;
 	}
+
 	return 0;
+
 }
 
 /*
  * Translate standard encoding definitions
  */
 const char *
-get_encoding_name(u_int encoding)
+get_encoding_name(int encoding)
 {
 	switch (encoding) {
 	case AUDIO_ENCODING_ULAW:

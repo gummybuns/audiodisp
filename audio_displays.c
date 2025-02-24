@@ -121,7 +121,7 @@ display_info(audio_ctrl_t ctrl, circular_list_t *stream_list)
 	nodelay(stdscr, FALSE);
 	print_ctrl(ctrl);
 	print_stream(stream_list->streams[0]);
-	while (1) {
+	for (;;) {
 		keypress = (char)getch();
 		option = check_options(keypress);
 		if (option != 0 && option != DISPLAY_INFO) {
@@ -151,7 +151,7 @@ display_encodings(audio_ctrl_t *rctrl, audio_ctrl_t *pctrl)
 	rmax = rctrl->encoding_options.total;
 	pmax = pctrl->encoding_options.total;
 
-	while (1) {
+	for (;;) {
 		mvprintw(0, 0, "Enter a letter to update the encoding\n\n");
 		printw("HEY - YOU BETTER CHOOSE THE SAME ENCODINGS FOR BOTH FOR NOW OR YOUR EARS WILL HURT\n\n");
 		printw("Available Encodings for %s\n", rctrl->path);
@@ -228,7 +228,7 @@ display_playback(audio_ctrl_t play_ctrl, circular_list_t *stream_list)
 		i = (i + 1) % stream_list->size;
 	} while(i != stream_list->start);
 
-	while (1) {
+	for (;;) {
 		keypress = (char)getch();
 		option = check_options(keypress);
 		if (option != 0 && option != DISPLAY_PLAYBACK) {
@@ -295,7 +295,7 @@ display_intensity(audio_ctrl_t record_ctrl, circular_list_t *stream_list)
 
 	count = 0;
 	si = 0;
-	while (1) {
+	for (;;) {
 		audio_stream = stream_list->streams[si];
 		stream(record_ctrl, &audio_stream);
 		full_sample = flatten_stream(&audio_stream);

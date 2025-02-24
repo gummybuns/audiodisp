@@ -14,28 +14,19 @@
 #define PLAY_DURATION 5000
 #define STREAMS_NEEDED (PLAY_DURATION / STREAM_DURATION)
 
-#define mu 1E-11
-#define DELAY_LINE
-#define NUM_SECTIONS 128
-
-
-
-// i think what i want this to do for now
-// when u press R it records audio and does what it normally does
-//   but in addition it stores the last 10 seconds of recorded data
-// when u press P is plays the recorded audio back to u and shows the audio
-//	 intensity again
-// i just dont know how to get rid of the feedback loop
 int main(int argc, char *argv[])
 {
-	u_char option;
+	char option;
 	char *recording_audio_path;
 	char *play_audio_path;
 	int result;
+	u_int i;
 	audio_ctrl_t record_ctrl;
 	audio_ctrl_t play_ctrl;
 	audio_stream_t record_streams[STREAMS_NEEDED];
 	circular_list_t stream_list;
+
+	setprogname(argv[0]);
 
 	stream_list.size = STREAMS_NEEDED;
 	stream_list.start = 0;
@@ -63,18 +54,20 @@ int main(int argc, char *argv[])
 	noecho();
 
 	option = DISPLAY_RECORD;
-	while (1) {
-		// TODO: displaying the options at the bottom seems to add some delay
-		// when switching windows.. im guessing because it has to scroll to
-		// the very bottom?? seems kinda crazy
-		// TODO: memory leak - i need to clean up the buffers before i call
-		// build_stream_from_ctrl
+	for (;;) {
+		/*
+		 * TODO: displaying the options at the bottom seems to add some delay
+		 * when switching windows.. im guessing because it has to scroll to
+		 * the very bottom?? seems kinda crazy
+		 * TODO: memory leak - i need to clean up the buffers before i call
+		 * build_stream_from_ctrl
+		 */
 		display_options();
 
 		if (option == DISPLAY_RECORD) {
 			stream_list.start = 0;
 
-			for (int i = 0; i < stream_list.size; i++) {
+			for (i = 0; i < stream_list.size; i++) {
 				result = build_stream_from_ctrl(
 				    record_ctrl,
 				    STREAM_DURATION,
@@ -89,8 +82,8 @@ int main(int argc, char *argv[])
 		} else if (option == DISPLAY_INFO) {
 			stream_list.start = 0;
 
-			// TODO - editing the encoding needs to reset streams instead
-			for (int i = 0; i < stream_list.size; i++) {
+			/* TODO - editing the encoding needs to reset streams instead */
+			for (i = 0; i < stream_list.size; i++) {
 				result = build_stream_from_ctrl(
 				    record_ctrl,
 				    STREAM_DURATION,
@@ -104,7 +97,7 @@ int main(int argc, char *argv[])
 		} else if (option == DISPLAY_ENCODING) {
 			option = display_encodings(&record_ctrl, &play_ctrl);
 		} else if (option == DISPLAY_PLAYBACK) {
-			// TODO - if i change the encoding i should clear the list too
+			/* TODO - if i change the encoding i should clear the list too */
 			option = display_playback(play_ctrl, &stream_list);
 		} else {
 			break;
@@ -114,6 +107,6 @@ int main(int argc, char *argv[])
 
 	endwin();
 
-	// todo clean up the buffers in the stream_list
+	/* todo clean up the buffers in the stream_list */
 	return 0;
 }

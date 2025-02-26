@@ -54,16 +54,22 @@ rms16(short *data, u_int start, u_int end)
 static float
 rms32(float *data, u_int start, u_int end)
 {
+
 	u_int i, length;
 	float sum;
+	FILE *file = fopen("32_precision.txt", "wb");
 
 	sum = 0.0;
 	length = end - start;
 
 	for (i = start; i < (start + length); i++){
-		sum += (float)data[i] * (float)data[i];
+		fprintf(file, "%f\n", data[i]);
+		sum += data[i] * data[i];
+		mvprintw(4, 0, "%f\n", data[i]);
 	}
 
+	mvprintw(5, 0, "SUM: %f\n", sum);
+	fclose(file);	
 	return sqrtf((float)sum / (float)length);
 }
 

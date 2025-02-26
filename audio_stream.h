@@ -9,7 +9,7 @@ typedef struct audio_buffer_t {
 	u_int samples;		/* number of samples in the buffer */
 	u_int size;			/* total memory size of buffer */
 	u_int precision;	/* number of bits per sample */
-	u_char *data;		/* the buffer of data */
+	void *data;			/* the buffer of data */
 } audio_buffer_t;
 
 typedef struct audios_buffer_t {
@@ -38,5 +38,5 @@ int build_stream_from_ctrl(audio_ctrl_t ctrl, u_int ms, audio_stream_t *stream);
 int stream(audio_ctrl_t ctrl, audio_stream_t *stream);
 int clean_buffers(audio_stream_t *stream);
 void print_stream(audio_stream_t stream);
-u_char *flatten_stream(audio_stream_t *stream);
+void *flatten_stream(audio_stream_t *stream);
 #endif

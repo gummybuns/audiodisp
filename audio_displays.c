@@ -71,16 +71,25 @@ rms32(float *data, u_int start, u_int end)
  * Calculate the rms of for a chunk of audio data
  */
 static float
-calculate_rms_percent(u_char *data, u_int precision, u_int start, u_int end)
+calculate_rms_percent(void *data, u_int precision, u_int start, u_int end)
 {
+	float rms;
+
 	switch (precision) {
 	case 8:
-		return rms8((char *)data, start, end) / SCHAR_MAX * 100;
+		rms = rms8((char *)data, start, end);
+		mvprintw(2, 0, "%f\n", rms);
+		return rms / SCHAR_MAX * 100;
 	case 16:
-		return rms16((short *)data, start, end) / SHRT_MAX * 100;
+		rms = rms16((short *)data, start, end);
+		mvprintw(2, 0, "%f\n", rms);
+		return rms / SHRT_MAX * 100;
 	case 32:
-		return rms32((float *)data, start, end) / FLT_MAX * 100;
+		rms = rms32((float *)data, start, end);
+		mvprintw(2, 0, "%f\n", rms);
+		return rms / FLT_MAX * 100;
 	default:
+		endwin();
 		return -1;
 	}
 }
@@ -274,7 +283,7 @@ display_intensity(audio_ctrl_t record_ctrl, circular_list_t *stream_list)
 	int draw_length;
 	float percent;
 	audio_stream_t audio_stream;
-	u_char *full_sample;
+	void *full_sample;
 
 
 	getmaxyx(stdscr, row, col);
@@ -324,10 +333,10 @@ display_intensity(audio_ctrl_t record_ctrl, circular_list_t *stream_list)
 				refresh();
 			} else {
 				// TODO: error handling should be better
-				endwin();
-				free(full_sample);
-				printf("Unsupported codec\n");
-				exit(-1);
+				//endwin();
+				//free(full_sample);
+				//printf("Unsupported codec\n");
+				//exit(-1);
 			}
 		}
 

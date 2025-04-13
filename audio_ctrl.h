@@ -30,24 +30,15 @@ typedef struct audio_config_t {
 	u_int pause;
 } audio_config_t;
 
-typedef struct encoding_options_t {
-	int total;
-	audio_encoding_t *encodings;
-} encoding_options_t;
-
 typedef struct audio_ctrl_t {
 	int fd;
 	int mode;
-	audio_config_t hw_info;
 	audio_config_t config;
-	encoding_options_t encoding_options;
 	char *path;
 } audio_ctrl_t;
 
 int build_audio_ctrl(audio_ctrl_t *ctrl, char *path, int mode);
 void print_ctrl(audio_ctrl_t ctrl);
-void print_encodings(audio_ctrl_t *ctrl, int offset);
-int get_max_encoding(audio_ctrl_t ctrl);
 int update_ctrl(audio_ctrl_t *ctrl);
 const char *get_encoding_name(int encoding);
 

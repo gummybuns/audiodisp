@@ -11,15 +11,65 @@
 #include "audio_ctrl.h"
 #include "audio_stream.h"
 
+/*
+ * Translate standard encoding definitions
+ */
+const char *
+get_encoding_name(ctrlencoding encoding)
+{
+	switch (encoding) {
+	case CTRL_NONE:
+		return "NONE";
+	case CTRL_MULAW:
+		return "MULAW";
+	case CTRL_ALAW:
+		return "ALAW";
+	case CTRL_LINEAR:
+		return "LINEAR";
+	case CTRL_LINEAR8:
+		return "LINEAR8";
+	case CTRL_SLINEAR:
+		return "SLINEAR";
+	case CTRL_SLINEAR_LE:
+		return "SLINEAR_LE";
+	case CTRL_SLINEAR_BE:
+		return "SLINEAR_BE";
+	case CTRL_ULINEAR:
+		return "ULINEAR";
+	case CTRL_ULINEAR_LE:
+		return "ULINEAR_LE";
+	case CTRL_ULINEAR_BE:
+		return "ULINEAR_BE";
+	case CTRL_MPEG_L1_STREAM:
+		return "MPEG_L1_STREAM";
+	case CTRL_MPEG_L1_PACKETS:
+		return "MPEG_L1_PACKETS";
+	case CTRL_MPEG_L1_SYSTEM:
+		return "MPEG_L1_SYSTEM";
+	case CTRL_MPEG_L2_STREAM:
+		return "MPEG_L2_STREAM";
+	case CTRL_MPEG_L2_PACKETS:
+		return "MPEG_L2_PACKETS";
+	case CTRL_MPEG_L2_SYSTEM:
+		return "MPEG_L2_SYSTEM";
+	case CTRL_AC3:
+		return "DOLBY_DIGITAL_AC3";
+	default:
+		return NULL;
+	}
+}
+
 static const char *
 get_mode(audio_ctrl_t ctrl)
 {
-	if (ctrl.mode == AUMODE_PLAY)
-		return CTRL_MODE_PLAY;
-	else if (ctrl.mode == AUMODE_RECORD)
-		return CTRL_MODE_RECORD;
-	else
+	switch(ctrl.mode) {
+	case CTRL_PLAY:
+		return "PLAY";
+	case CTRL_RECORD:
+		return "RECORD";
+	default:
 		return NULL;
+	}
 }
 
 /*
@@ -31,7 +81,7 @@ print_ctrl(audio_ctrl_t ctrl)
 	const char *mode, *config_encoding;
 
 	mode = get_mode(ctrl);
-	config_encoding = get_encoding_name((int)ctrl.config.encoding);
+	config_encoding = get_encoding_name(ctrl.config.encoding);
 
 	printw(
 	    "Audio Controller\n"
@@ -57,7 +107,6 @@ print_ctrl(audio_ctrl_t ctrl)
 
 /*
  * Initializes an audio controller based on the file path to the audio device
- * TODO figure out error codes
  */
 int
 build_audio_ctrl(audio_ctrl_t *ctrl, char *path, int mode)
@@ -67,7 +116,7 @@ build_audio_ctrl(audio_ctrl_t *ctrl, char *path, int mode)
 
 	fd = open(path, O_RDONLY);
 	if (fd == -1) {
-		return -1;
+		return CTRL_ERR_FILE_OPEN;
 	}
 
 	ctrl->path = path;
@@ -76,10 +125,10 @@ build_audio_ctrl(audio_ctrl_t *ctrl, char *path, int mode)
 
 	/* initialize defaults */
 	if (ioctl(ctrl->fd, AUDIO_GETINFO, &info) == -1) {
-		return 1;
+		return CTRL_ERR_GETINFO;
 	}
 	if (ioctl(ctrl->fd, AUDIO_GETFORMAT, &format) == -1) {
-		return 1;
+		return CTRL_ERR_GETFORMAT;
 	}
 
 	/* set device to use hardware's current settings */
@@ -91,13 +140,13 @@ build_audio_ctrl(audio_ctrl_t *ctrl, char *path, int mode)
 	info.record.encoding = format.record.encoding;
 
 	if (ioctl(ctrl->fd, AUDIO_SETINFO, &info) == -1) {
-		return -3;
+		return CTRL_ERR_SETINFO;
 	}
 
 
 	/* update ctrl to reflect changes */
 	if (ioctl(ctrl->fd, AUDIO_GETINFO, &info) == -1) {
-		return -1;
+		return CTRL_ERR_GETINFO;
 	}
 	ctrl->config.precision = info.record.precision;
 	ctrl->config.encoding = info.record.encoding;
@@ -108,32 +157,3 @@ build_audio_ctrl(audio_ctrl_t *ctrl, char *path, int mode)
 	return 0;
 }
 
-/*
- * Translate standard encoding definitions
- */
-const char *
-get_encoding_name(int encoding)
-{
-	switch (encoding) {
-	case AUDIO_ENCODING_ULAW:
-		return ENC_MULAW;
-	case AUDIO_ENCODING_ALAW:
-		return ENC_ALAW;
-	case AUDIO_ENCODING_SLINEAR:
-		return ENC_SLINEAR;
-	case AUDIO_ENCODING_SLINEAR_LE:
-		return ENC_SLINEAR_LE;
-	case AUDIO_ENCODING_SLINEAR_BE:
-		return ENC_SLINEAR_BE;
-	case AUDIO_ENCODING_ULINEAR:
-		return ENC_ULINEAR;
-	case AUDIO_ENCODING_ULINEAR_LE:
-		return ENC_ULINEAR_LE;
-	case AUDIO_ENCODING_ULINEAR_BE:
-		return ENC_ULINEAR_BE;
-	case AUDIO_ENCODING_AC3:
-		return ENC_AC3;
-	default:
-		return NULL;
-	}
-}

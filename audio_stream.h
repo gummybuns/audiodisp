@@ -24,12 +24,6 @@ typedef struct audios_buffer_t {
 	audio_buffer_t **buffers;	/* the buffers that hold the data */
 } audio_stream_t;
 
-typedef struct circular_list_t {
-	u_int size;					/* the number of streams */
-	audio_stream_t *streams;	/* the array of streams */
-	u_int start;					/* the index of the first item in the list */
-} circular_list_t;
-
 int build_stream(u_int milliseconds, u_int channels, u_int sample_rate,
                  u_int buffer_size, u_int precision, u_int encoding,
                  audio_stream_t * stream);

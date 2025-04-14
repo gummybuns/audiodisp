@@ -28,7 +28,7 @@ int main(int argc, char *argv[])
 
 	recording_audio_path = argv[1];
 
-	result = build_audio_ctrl(&record_ctrl, recording_audio_path, AUMODE_RECORD);
+	result = build_audio_ctrl(&record_ctrl, recording_audio_path, CTRL_RECORD);
 	if (result != 0) {
 		err(result, "Failed to build record audio controller %d", result);
 	}

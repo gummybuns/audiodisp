@@ -10,6 +10,7 @@
 
 #include "audio_ctrl.h"
 #include "audio_stream.h"
+#include "error_codes.h"
 
 /*
  * Translate standard encoding definitions
@@ -109,7 +110,7 @@ build_audio_ctrl(audio_ctrl_t *ctrl, char *path, int mode)
 
 	fd = open(path, O_RDONLY);
 	if (fd == -1) {
-		return CTRL_ERR_FILE_OPEN;
+		return E_CTRL_FILE_OPEN;
 	}
 
 	ctrl->path = path;
@@ -118,10 +119,10 @@ build_audio_ctrl(audio_ctrl_t *ctrl, char *path, int mode)
 
 	/* initialize defaults */
 	if (ioctl(ctrl->fd, AUDIO_GETINFO, &info) == -1) {
-		return CTRL_ERR_GETINFO;
+		return E_CTRL_GETINFO;
 	}
 	if (ioctl(ctrl->fd, AUDIO_GETFORMAT, &format) == -1) {
-		return CTRL_ERR_GETFORMAT;
+		return E_CTRL_GETFORMAT;
 	}
 
 	/* set device to use hardware's current settings */
@@ -133,12 +134,12 @@ build_audio_ctrl(audio_ctrl_t *ctrl, char *path, int mode)
 	info.record.encoding = format.record.encoding;
 
 	if (ioctl(ctrl->fd, AUDIO_SETINFO, &info) == -1) {
-		return CTRL_ERR_SETINFO;
+		return E_CTRL_SETINFO;
 	}
 
 	/* update ctrl to reflect changes */
 	if (ioctl(ctrl->fd, AUDIO_GETINFO, &info) == -1) {
-		return CTRL_ERR_GETINFO;
+		return E_CTRL_GETINFO;
 	}
 	ctrl->config.precision = info.record.precision;
 	ctrl->config.encoding = info.record.encoding;

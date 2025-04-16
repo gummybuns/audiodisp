@@ -8,11 +8,12 @@
 #include "audio_displays.h"
 #include "audio_rms.h"
 #include "audio_stream.h"
+#include "error_codes.h"
 
 /*
  * Check if the user pressed any of the navigation options
  */
-static char
+static int
 check_options(int keypress)
 {
 	if (keypress == 'I') {
@@ -32,11 +33,11 @@ check_options(int keypress)
  * Wait for a user to press one of navigation options. Returns the pressed
  * navigation option so the main routine can render the next screen
  */
-char
+int
 display_info(audio_ctrl_t ctrl, audio_stream_t audio_stream)
 {
 	char keypress;
-	char option;
+	int option;
 
 	move(0, 0);
 	nodelay(stdscr, FALSE);
@@ -58,16 +59,17 @@ display_info(audio_ctrl_t ctrl, audio_stream_t audio_stream)
  * Wait for a user to press one of navigation options. Returns the pressed
  * navigation option so the main routine can render the next screen
  */
-char
-display_intensity(audio_ctrl_t record_ctrl, audio_stream_t *audio_stream)
+int
+display_intensity(audio_ctrl_t ctrl, audio_stream_t *audio_stream)
 {
-	char option;
 	char keypress;
 	int title_center;
 	int row, col;
 	int x_padding, y_padding;
 	int bar_start, bar_end, bar_distance;
 	int draw_length;
+	int option;
+	int res;
 	float rms, percent;
 	void *full_sample;
 
@@ -89,18 +91,20 @@ display_intensity(audio_ctrl_t record_ctrl, audio_stream_t *audio_stream)
 
 	for (;;) {
 		/* record the audio to the stream */
-		stream(record_ctrl, audio_stream);
-		full_sample = flatten_stream(audio_stream);
+		res = stream(ctrl, audio_stream);
+		if (res != 0) {
+			return res;
+		}
 
 		/* calculate rms */
+		full_sample = flatten_stream(audio_stream);
 		rms = calc_rms(full_sample, audio_stream->precision,
 		    audio_stream->total_samples);
 		percent = calc_rms_percent(rms, audio_stream->precision);
 
 		if (percent < 0) {
-			endwin();
 			free(full_sample);
-			err(RMS_ERR_UNKNOWN_PRECISION, "Unsupported codec");
+			return E_RMS_UNKNOWN_PRECISION;
 		}
 
 		/* draw */

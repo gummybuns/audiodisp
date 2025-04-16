@@ -1,6 +1,7 @@
 #include <sys/audioio.h>
 
 #include <curses.h>
+#include <errno.h>
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -8,6 +9,7 @@
 
 #include "audio_ctrl.h"
 #include "audio_stream.h"
+#include "error_codes.h"
 
 /*
  * Print details about the audio stream
@@ -144,8 +146,7 @@ stream(audio_ctrl_t ctrl, audio_stream_t *stream)
 		}
 
 		if (io_count < 0) {
-			printf("Failed to stream\n");
-			return -1;
+			return E_STREAM_IO_ERROR;
 		}
 		stream->samples_streamed += buffer->size;
 	}

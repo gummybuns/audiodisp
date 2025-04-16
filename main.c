@@ -1,18 +1,19 @@
-#include <unistd.h>
-#include <stdio.h>
-#include <stdlib.h>
 #include <curses.h>
 #include <err.h>
-#include <sys/audioio.h>
 #include <math.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/audioio.h>
+#include <unistd.h>
 
 #include "audio_ctrl.h"
-#include "audio_stream.h"
 #include "audio_displays.h"
+#include "audio_stream.h"
 
 #define STREAM_DURATION 250
 
-int main(int argc, char *argv[])
+int
+main(int argc, char *argv[])
 {
 	char option;
 	char *recording_audio_path;
@@ -28,9 +29,11 @@ int main(int argc, char *argv[])
 
 	recording_audio_path = argv[1];
 
-	result = build_audio_ctrl(&record_ctrl, recording_audio_path, CTRL_RECORD);
+	result =
+	    build_audio_ctrl(&record_ctrl, recording_audio_path, CTRL_RECORD);
 	if (result != 0) {
-		err(result, "Failed to build record audio controller %d", result);
+		err(result, "Failed to build record audio controller %d",
+		    result);
 	}
 
 	initscr();
@@ -42,10 +45,8 @@ int main(int argc, char *argv[])
 		display_options();
 
 		if (option == DISPLAY_RECORD) {
-			result = build_stream_from_ctrl(
-			    record_ctrl,
-			    STREAM_DURATION,
-			    &rstream);
+			result = build_stream_from_ctrl(record_ctrl,
+			    STREAM_DURATION, &rstream);
 			if (result != 0) {
 				err(result, "Failed to build audio stream");
 			}

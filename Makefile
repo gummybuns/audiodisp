@@ -9,3 +9,6 @@ DPADD+=	${LIBCURSES} ${LIBM}
 WARNS=	6
 
 .include <bsd.prog.mk>
+
+format:
+	clang-format -i *.c *.h

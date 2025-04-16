@@ -15,7 +15,7 @@ rms8(char *data, u_int length)
 
 	sum = 0.0;
 
-	for (i = 0; i < length; i++){
+	for (i = 0; i < length; i++) {
 		sum += (float)data[i] * (float)data[i];
 	}
 
@@ -33,7 +33,7 @@ rms16(short *data, u_int length)
 
 	sum = 0.0;
 
-	for (i = 0; i < length; i++){
+	for (i = 0; i < length; i++) {
 		sum += (float)data[i] * (float)data[i];
 	}
 
@@ -52,7 +52,7 @@ rms32(float *data, u_int length)
 
 	sum = 0.0;
 
-	for (i = 0; i < length; i++){
+	for (i = 0; i < length; i++) {
 		sum += data[i] * data[i];
 	}
 
@@ -62,7 +62,8 @@ rms32(float *data, u_int length)
 /*
  * Calculate the root mean square of the data buffer
  */
-float calc_rms(void *data, u_int precision, u_int length)
+float
+calc_rms(void *data, u_int precision, u_int length)
 {
 	switch (precision) {
 	case 8:
@@ -79,9 +80,10 @@ float calc_rms(void *data, u_int precision, u_int length)
 /*
  * Calculates the percentage of the rms value based on the precision
  */
-float calc_rms_percent(float rms, u_int precision)
+float
+calc_rms_percent(float rms, u_int precision)
 {
-	switch(precision) {
+	switch (precision) {
 	case 8:
 		return rms / SCHAR_MAX * 100;
 	case 16:

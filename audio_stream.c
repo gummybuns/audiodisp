@@ -20,26 +20,20 @@ print_stream(audio_stream_t stream)
 
 	encoding = get_encoding_name((int)stream.encoding);
 
-	printw(
-	    "STREAM\n"
-	    "\tmilliseconds:\t\t%d\n"
-	    "\tsamples_streamed:\t%d\n"
-	    "\tchannels:\t\t%d\n"
-	    "\tencoding:\t\t%s\n"
-	    "\tprecision:\t\t%d\n"
-	    "\ttotal_size:\t\t%d\n"
-	    "\ttotal_samples:\t\t%d\n"
-	    "\tbuffer_count:\t\t%d\n",
-	    stream.milliseconds,
-	    stream.samples_streamed,
-	    stream.channels,
-	    encoding,
-	    stream.precision,
-	    stream.total_size,
-	    stream.total_samples,
+	printw("STREAM\n"
+	       "\tmilliseconds:\t\t%d\n"
+	       "\tsamples_streamed:\t%d\n"
+	       "\tchannels:\t\t%d\n"
+	       "\tencoding:\t\t%s\n"
+	       "\tprecision:\t\t%d\n"
+	       "\ttotal_size:\t\t%d\n"
+	       "\ttotal_samples:\t\t%d\n"
+	       "\tbuffer_count:\t\t%d\n",
+	    stream.milliseconds, stream.samples_streamed, stream.channels,
+	    encoding, stream.precision, stream.total_size, stream.total_samples,
 	    stream.buffer_count);
 	printw("\tBUFFERS\n");
-	for (i = 0; i < stream.buffer_count; i++){
+	for (i = 0; i < stream.buffer_count; i++) {
 		printw("\t\tbuffer[%d]\n", i);
 		printw("\t\tsize: %d\n", stream.buffers[i]->size);
 		printw("\t\tsamples: %d\n", stream.buffers[i]->samples);
@@ -53,17 +47,12 @@ print_stream(audio_stream_t stream)
 int
 build_stream_from_ctrl(audio_ctrl_t ctrl, u_int ms, audio_stream_t *stream)
 {
-	return build_stream(
-	    ms,
-	    ctrl.config.channels,
-	    ctrl.config.sample_rate,
-	    ctrl.config.buffer_size,
-	    ctrl.config.precision,
-	    ctrl.config.encoding,
-	    stream);
+	return build_stream(ms, ctrl.config.channels, ctrl.config.sample_rate,
+	    ctrl.config.buffer_size, ctrl.config.precision,
+	    ctrl.config.encoding, stream);
 }
 
-/* 
+/*
  * Build an audio stream
  *
  * As an example:
@@ -83,15 +72,8 @@ build_stream_from_ctrl(audio_ctrl_t ctrl, u_int ms, audio_stream_t *stream)
  * that means i need 8 buffers (samples_needed / samples_per_buffer)
  */
 int
-build_stream(
-    u_int milliseconds,
-    u_int channels,
-    u_int sample_rate,
-    u_int buffer_size,
-    u_int precision,
-    u_int encoding,
-    audio_stream_t *stream
-)
+build_stream(u_int milliseconds, u_int channels, u_int sample_rate,
+    u_int buffer_size, u_int precision, u_int encoding, audio_stream_t *stream)
 {
 	u_int i;
 	u_int bytes_per_sample;
@@ -104,14 +86,15 @@ build_stream(
 	samples_needed = ceilf(
 	    (float)milliseconds / 1000 * (float)sample_rate * (float)channels);
 	bytes_per_sample = precision / STREAM_BYTE_SIZE;
-	samples_per_buffer = ceilf((float)buffer_size / (float)bytes_per_sample);
+	samples_per_buffer =
+	    ceilf((float)buffer_size / (float)bytes_per_sample);
 	buffers_needed = ceilf(samples_needed / samples_per_buffer);
-
 
 	stream->milliseconds = milliseconds;
 	stream->channels = channels;
 	stream->encoding = encoding;
-	stream->buffers = malloc((size_t)buffers_needed * sizeof(audio_buffer_t *));
+	stream->buffers =
+	    malloc((size_t)buffers_needed * sizeof(audio_buffer_t *));
 	stream->total_samples = (u_int)samples_needed;
 	stream->precision = precision;
 	stream->buffer_count = 0;
@@ -151,7 +134,7 @@ stream(audio_ctrl_t ctrl, audio_stream_t *stream)
 	ssize_t io_count;
 	io_count = 0;
 
-	for (i = 0; i < stream->buffer_count; i++){
+	for (i = 0; i < stream->buffer_count; i++) {
 		audio_buffer_t *buffer = stream->buffers[i];
 
 		if (ctrl.mode == AUMODE_RECORD) {
@@ -178,7 +161,7 @@ clean_buffers(audio_stream_t *stream)
 {
 	u_int i;
 
-	for (i = 0; i < stream->buffer_count; i++){
+	for (i = 0; i < stream->buffer_count; i++) {
 		free(stream->buffers[i]->data);
 		free(stream->buffers[i]);
 	}
@@ -203,10 +186,10 @@ flatten_stream(audio_stream_t *stream)
 
 	flattened = malloc(stream->total_size);
 	s = 0;
-	for (i = 0; i < stream->buffer_count; i++){
+	for (i = 0; i < stream->buffer_count; i++) {
 		audio_buffer_t *buffer = stream->buffers[i];
-		for (j = 0; j < buffer->size; j++){
-			switch(stream->precision) {
+		for (j = 0; j < buffer->size; j++) {
+			switch (stream->precision) {
 			case 8:
 				cdata = (u_char *)buffer->data;
 				((u_char *)flattened)[s] = cdata[j];

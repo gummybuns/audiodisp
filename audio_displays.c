@@ -4,10 +4,10 @@
 #include <math.h>
 #include <stdlib.h>
 
-#include "audio_displays.h"
 #include "audio_ctrl.h"
-#include "audio_stream.h"
+#include "audio_displays.h"
 #include "audio_rms.h"
+#include "audio_stream.h"
 
 /*
  * Check if the user pressed any of the navigation options
@@ -71,7 +71,6 @@ display_intensity(audio_ctrl_t record_ctrl, audio_stream_t *audio_stream)
 	float rms, percent;
 	void *full_sample;
 
-
 	getmaxyx(stdscr, row, col);
 	y_padding = col / 10;
 	x_padding = row / 10;
@@ -94,11 +93,8 @@ display_intensity(audio_ctrl_t record_ctrl, audio_stream_t *audio_stream)
 		full_sample = flatten_stream(audio_stream);
 
 		/* calculate rms */
-		rms = calc_rms(
-		    full_sample,
-		    audio_stream->precision,
-		    audio_stream->total_samples
-		    );
+		rms = calc_rms(full_sample, audio_stream->precision,
+		    audio_stream->total_samples);
 		percent = calc_rms_percent(rms, audio_stream->precision);
 
 		if (percent < 0) {
@@ -108,16 +104,15 @@ display_intensity(audio_ctrl_t record_ctrl, audio_stream_t *audio_stream)
 		}
 
 		/* draw */
-		draw_length = (int)(
-			(float)bar_distance * (percent / (float)100.0)
-		);
+		draw_length =
+		    (int)((float)bar_distance * (percent / (float)100.0));
 		mvhline(2, 0, ' ', col);
 		mvprintw(2, title_center + 2, "RMS:\t%d", (int)rms);
 		mvhline(2 + x_padding, bar_start, ' ', bar_distance);
 		mvhline(2 + x_padding, bar_start, '=', draw_length);
 		move(1, 0);
 		refresh();
-		
+
 		/* listen for input */
 		free(full_sample);
 		keypress = (char)getch();

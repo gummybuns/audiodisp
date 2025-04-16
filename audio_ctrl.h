@@ -39,24 +39,23 @@ typedef enum ctrlencoding {
 } ctrlencoding;
 
 typedef struct audio_config_t {
-	u_int buffer_size;		/* size of the audio device buffer in bytes */
-	u_int channels;			/* number of channels for the audio device */
-	ctrlencoding encoding;	/* the encoding of the audio device */
-	u_int precision;		/* the number of bits per sample */
-	u_int sample_rate;		/* number of samples per second */
-	u_int pause;			/* is the device actively recording */
+	u_int buffer_size;     /* size of the audio device buffer in bytes */
+	u_int channels;        /* number of channels for the audio device */
+	ctrlencoding encoding; /* the encoding of the audio device */
+	u_int precision;       /* the number of bits per sample */
+	u_int sample_rate;     /* number of samples per second */
+	u_int pause;           /* is the device actively recording */
 } audio_config_t;
 
 typedef struct audio_ctrl_t {
-	int fd;					/* file descriptor to the audio device */
-	ctrlmode mode;			/* record vs play */
-	audio_config_t config;	/* the configuration of the audio device */
-	char *path;				/* the path to the audio device */
+	int fd;                /* file descriptor to the audio device */
+	ctrlmode mode;         /* record vs play */
+	audio_config_t config; /* the configuration of the audio device */
+	char *path;            /* the path to the audio device */
 } audio_ctrl_t;
 
 int build_audio_ctrl(audio_ctrl_t *ctrl, char *path, int mode);
 void print_ctrl(audio_ctrl_t ctrl);
 const char *get_encoding_name(ctrlencoding encoding);
-
 
 #endif

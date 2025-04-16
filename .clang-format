@@ -1,0 +1,16 @@
+ColumnLimit: 80
+ReflowComments: true
+IndentWidth: 8
+BracedInitializerIndentWidth: 8
+UseTab: ForContinuationAndIndentation
+PPIndentWidth: 1
+IndentPPDirectives: AfterHash
+AlignEscapedNewlines: Left
+AlignAfterOpenBracket: DontAlign
+ContinuationIndentWidth: 4
+AllowAllParametersOfDeclarationOnNextLine: false
+AllowAllArgumentsOnNextLine: false
+ConstructorInitializerIndentWidth: 8
+BreakBeforeBraces: WebKit
+AlwaysBreakAfterReturnType: TopLevelDefinitions
+AlignArrayOfStructures: Right

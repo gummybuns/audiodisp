@@ -7,8 +7,8 @@
 #include <unistd.h>
 
 #include "audio_ctrl.h"
-#include "audio_displays.h"
 #include "audio_stream.h"
+#include "draw.h"
 #include "error_codes.h"
 
 #define STREAM_DURATION 250
@@ -39,25 +39,25 @@ main(int argc, char *argv[])
 	raw();
 	noecho();
 
-	option = DISPLAY_RECORD;
+	option = DRAW_RECORD;
 	for (;;) {
-		display_options();
+		draw_options();
 
 		if (option >= E_UNHANDLED) {
 			err(1, "Unhandled Error: %d", option);
 		}
 
-		if (option == DISPLAY_RECORD) {
+		if (option == DRAW_RECORD) {
 			res = build_stream_from_ctrl(rctrl, STREAM_DURATION,
 			    &rstream);
 			if (res != 0) {
 				err(1, "Failed to build audio stream: %d", res);
 			}
 
-			option = display_intensity(rctrl, &rstream);
+			option = draw_intensity(rctrl, &rstream);
 			clean_buffers(&rstream);
-		} else if (option == DISPLAY_INFO) {
-			option = display_info(rctrl, rstream);
+		} else if (option == DRAW_INFO) {
+			option = draw_info(rctrl, rstream);
 		} else {
 			break;
 		}

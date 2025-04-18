@@ -5,9 +5,9 @@
 #include <stdlib.h>
 
 #include "audio_ctrl.h"
-#include "audio_displays.h"
 #include "audio_rms.h"
 #include "audio_stream.h"
+#include "draw.h"
 #include "error_codes.h"
 
 /*
@@ -43,11 +43,11 @@ static int
 check_options(int keypress)
 {
 	if (keypress == 'I') {
-		return DISPLAY_INFO;
+		return DRAW_INFO;
 	} else if (keypress == 'R') {
-		return DISPLAY_RECORD;
+		return DRAW_RECORD;
 	} else if (keypress == 'Q') {
-		return DISPLAY_EXIT;
+		return DRAW_EXIT;
 	} else {
 		return 0;
 	}
@@ -60,7 +60,7 @@ check_options(int keypress)
  * navigation option so the main routine can render the next screen
  */
 int
-display_info(audio_ctrl_t ctrl, audio_stream_t audio_stream)
+draw_info(audio_ctrl_t ctrl, audio_stream_t audio_stream)
 {
 	char keypress;
 	int option;
@@ -71,7 +71,7 @@ display_info(audio_ctrl_t ctrl, audio_stream_t audio_stream)
 	for (;;) {
 		keypress = (char)getch();
 		option = check_options(keypress);
-		if (option != 0 && option != DISPLAY_INFO) {
+		if (option != 0 && option != DRAW_INFO) {
 			return option;
 		}
 	}
@@ -85,7 +85,7 @@ display_info(audio_ctrl_t ctrl, audio_stream_t audio_stream)
  * navigation option so the main routine can render the next screen
  */
 int
-display_intensity(audio_ctrl_t ctrl, audio_stream_t *audio_stream)
+draw_intensity(audio_ctrl_t ctrl, audio_stream_t *audio_stream)
 {
 	char keypress;
 	int title_center;
@@ -146,7 +146,7 @@ display_intensity(audio_ctrl_t ctrl, audio_stream_t *audio_stream)
 		free(full_sample);
 		keypress = (char)getch();
 		option = check_options(keypress);
-		if (option != 0 && option != DISPLAY_RECORD) {
+		if (option != 0 && option != DRAW_RECORD) {
 			return option;
 		}
 	}
@@ -156,7 +156,7 @@ display_intensity(audio_ctrl_t ctrl, audio_stream_t *audio_stream)
  * Renders the nav options at the bottom of the screen for the user to see
  */
 void
-display_options(void)
+draw_options(void)
 {
 	int row;
 	row = getmaxy(stdscr);

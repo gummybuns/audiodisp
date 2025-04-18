@@ -69,7 +69,6 @@ build_stream(u_int milliseconds, u_int channels, u_int sample_rate,
 	stream->precision = precision;
 	stream->buffer_count = 0;
 	stream->total_size = 0;
-	stream->samples_streamed = 0;
 
 	i = (u_int)samples_needed;
 	while (i > 0) {
@@ -116,7 +115,6 @@ stream(audio_ctrl_t ctrl, audio_stream_t *stream)
 		if (io_count < 0) {
 			return E_STREAM_IO_ERROR;
 		}
-		stream->samples_streamed += buffer->size;
 	}
 
 	return 0;
@@ -142,7 +140,6 @@ clean_buffers(audio_stream_t *stream)
 /*
  * Convert all buffers on a stream into a single array
  * TODO there is probably a better way to do this with memcpy or something
- * i dont know yet how to not have the switch statement
  */
 void *
 flatten_stream(audio_stream_t *stream)
@@ -152,11 +149,12 @@ flatten_stream(audio_stream_t *stream)
 	u_char *cdata;
 	short *sdata;
 	float *fdata;
+	audio_buffer_t *buffer;
 
 	flattened = malloc(stream->total_size);
 	s = 0;
 	for (i = 0; i < stream->buffer_count; i++) {
-		audio_buffer_t *buffer = stream->buffers[i];
+		buffer = stream->buffers[i];
 		for (j = 0; j < buffer->size; j++) {
 			switch (stream->precision) {
 			case 8:

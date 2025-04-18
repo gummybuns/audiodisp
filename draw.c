@@ -126,9 +126,9 @@ draw_intensity(audio_ctrl_t ctrl, audio_stream_t *audio_stream)
 		rms = calc_rms(full_sample, audio_stream->precision,
 		    audio_stream->total_samples);
 		percent = calc_rms_percent(rms, audio_stream->precision);
+		free(full_sample);
 
 		if (percent < 0) {
-			free(full_sample);
 			return E_RMS_UNKNOWN_PRECISION;
 		}
 
@@ -143,7 +143,6 @@ draw_intensity(audio_ctrl_t ctrl, audio_stream_t *audio_stream)
 		refresh();
 
 		/* listen for input */
-		free(full_sample);
 		keypress = (char)getch();
 		option = check_options(keypress);
 		if (option != 0 && option != DRAW_RECORD) {

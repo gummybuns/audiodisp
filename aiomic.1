@@ -27,69 +27,57 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd July 1, 2023
-.Dt AIOMIXER 1
+.Dd April 18, 2025
+.Dt AIOMIC 1
 .Os
 .Sh NAME
-.Nm aiomixer
-.Nd graphical mixer for
-.Nx
-audio
+.Nm aiomic
+.Nd graphical microphone tester
 .Sh SYNOPSIS
-.Nm aiomixer
-.Op Fl d Ar device
-.Op Fl u
+.Nm aiomic
+.Ao Ar device Ac
 .Sh DESCRIPTION
 .Nm
-is a graphical frontend for
-.Xr mixer 4
-devices that runs in your terminal.
+is a
+.Xr curses 3
+frontend to test
+.Nx
+.Xr audio 4
+recording devices.
 .Pp
 .Nm
-is primarily controlled using the cursor keys, e.g. to select a
-control, or change a control's value.
-Movement similar to
-.Xr vi 1
-is also supported.
-The current class can be changed with the number keys.
-The Q or Escape key can be used to return to the previous pane or exit
-.Nm .
+continually captures input from the
+.Ar device
+and measures the Root Mean Square of the collected samples.
 .Pp
-By default, volume levels for individual channels cannot be changed
-separately.
-The U key can be pressed to toggle changing the volume of individual
-channels.
+.Nm
+uses the existing configuration of the
+.Ar device
+and displays the RMS as a
+percentage of the maximum value based on the device's precision.
 .Pp
 The following options are available:
 .Bl -tag -width indent
-.It Fl d Ar device
-Used to specify an alternative mixer device.
-.It Fl u
-Used to unlock channels on start up.
-.El
-.Sh ENVIRONMENT
+.It Ao Ar device Ac
+The recording audio device. Write access to the device is required.
+.Sh NAVIGATION
+.Pp
 .Nm
-honours the informal standard
-.Dv NO_COLOR .
-When it is set in the environment, no colour will be used.
-.Sh FILES
-.Bl -tag -width /dev/mixer[0-3] -compact
-.It Pa /dev/mixer
-.It Pa /dev/mixer[0-3]
-.El
+uses the following keys for navigation:
+.Bl -tag -width indent
+.It R
+View the RMS of the recorded audio.
+.It I
+View configuration details of the
+.Ar device .
+.It Q
+Exit the application.
+.Sh EXAMPLES
+.Dl aiomic /dev/audio2
 .Sh SEE ALSO
-.Xr mixerctl 1 ,
-.Xr mixer 4
-.Sh HISTORY
-The first version (only available in pkgsrc) didn't support
-.Dv AUDIO_MIXER_SET
-properly, among other bugs.
+.Xr audio 4
 .Sh AUTHORS
 .Nm
 was written by
-.An Nia Alarie
-.Aq nia@NetBSD.org .
-.Sh BUGS
-.Nm aiomixer
-shows whatever mixer nodes the audio device's driver returns.
-Some drivers do not provide the most user-friendly control names.
+.An Zac Brown
+.Aq gummybuns@protonmail.com .

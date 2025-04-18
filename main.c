@@ -1,9 +1,12 @@
+#include <sys/audioio.h>
+
 #include <curses.h>
 #include <err.h>
+#include <errno.h>
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <sys/audioio.h>
+#include <string.h>
 #include <unistd.h>
 
 #include "audio_ctrl.h"
@@ -25,7 +28,8 @@ main(int argc, char *argv[])
 	setprogname(argv[0]);
 
 	if (argc <= 1) {
-		err(1, "Specify a recording audio device");
+		errno = EINVAL;
+		err(1, "Specify an audio device");
 	}
 
 	path = argv[1];

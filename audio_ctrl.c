@@ -1,12 +1,7 @@
 #include <sys/audioio.h>
 #include <sys/ioctl.h>
 
-#include <curses.h>
 #include <fcntl.h>
-#include <math.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 
 #include "audio_ctrl.h"
 #include "audio_stream.h"

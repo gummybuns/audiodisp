@@ -1,9 +1,4 @@
-#include <sys/audioio.h>
-
-#include <curses.h>
-#include <errno.h>
 #include <math.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 
@@ -106,7 +101,7 @@ stream(audio_ctrl_t ctrl, audio_stream_t *stream)
 	for (i = 0; i < stream->buffer_count; i++) {
 		audio_buffer_t *buffer = stream->buffers[i];
 
-		if (ctrl.mode == AUMODE_RECORD) {
+		if (ctrl.mode == CTRL_RECORD) {
 			io_count = read(ctrl.fd, buffer->data, buffer->size);
 		} else {
 			io_count = write(ctrl.fd, buffer->data, buffer->size);

@@ -1,42 +1,29 @@
-AIOMIC(1)                   General Commands Manual                  AIOMIC(1)
+# AIOMIC
 
-NAME
-     aiomic - graphical microphone tester
+`aiomic` is a curses frontend to test NetBSD audio recording devices.
 
-SYNOPSIS
-     aiomic <device>
+It continually captures input from the device and measures the Root Mean Square
+of the collected samples.
 
-DESCRIPTION
-     aiomic is a curses(3) frontend to test NetBSD audio(4) recording devices.
+`aiomic` uses the existing configuration of the device and displays the RMS as
+a percentage of the maximum value based on the device's precision.
 
-     aiomic continually captures input from the device and measures the Root
-     Mean Square of the collected samples.
+## Build
 
-     aiomic uses the existing configuration of the device and displays the RMS
-     as a percentage of the maximum value based on the device's precision.
+```bash
+make
+```
 
-     The following options are available:
+## Usage
 
-     <device>
-             The recording audio device. Write access to the device is
-             required.
+```bash
+./aioic /dev/audio1
+```
 
-NAVIGATION
-     aiomic uses the following keys for navigation:
+### Navigation
 
-     R       View the RMS of the recorded audio.
+`aiomic` uses the following keys for navigation:
 
-     I       View configuration details of the device.
-
-     Q       Exit the application.
-
-EXAMPLES
-           aiomic /dev/audio2
-
-SEE ALSO
-     audio(4)
-
-AUTHORS
-     aiomic was written by Zac Brown <gummybuns@protonmail.com>.
-
-NetBSD 10.0                     April 18, 2025                     NetBSD 10.0
+- `R` - View the RMS of the recorded audio
+- `I` - View the configuration details of the device
+- `Q` - Exit the application

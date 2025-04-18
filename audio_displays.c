@@ -11,6 +11,32 @@
 #include "error_codes.h"
 
 /*
+ * Print details about the audio controller
+ */
+static void
+print_ctrl(audio_ctrl_t ctrl)
+{
+	const char *mode, *config_encoding;
+
+	mode = get_mode(ctrl);
+	config_encoding = get_encoding_name(ctrl.config.encoding);
+
+	printw("Audio Controller\n"
+	       "\tDevice:\t\t%s\n"
+	       "\tMode:\t\t%s\n"
+	       "\tConfiguration:\n"
+	       "\t\tbuffer_size:\t\t%d\n"
+	       "\t\tsample_rate:\t\t%d\n"
+	       "\t\tprecision:\t\t%d\n"
+	       "\t\tchannels:\t\t%d\n"
+	       "\t\tencoding:\t\t%s\n"
+	       "\t\tpause:\t\t\t%d\n",
+	    ctrl.path, mode, ctrl.config.buffer_size, ctrl.config.sample_rate,
+	    ctrl.config.precision, ctrl.config.channels, config_encoding,
+	    ctrl.config.pause);
+}
+
+/*
  * Check if the user pressed any of the navigation options
  */
 static int
@@ -42,7 +68,6 @@ display_info(audio_ctrl_t ctrl, audio_stream_t audio_stream)
 	move(0, 0);
 	nodelay(stdscr, FALSE);
 	print_ctrl(ctrl);
-	print_stream(audio_stream);
 	for (;;) {
 		keypress = (char)getch();
 		option = check_options(keypress);

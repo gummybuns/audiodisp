@@ -30,6 +30,5 @@ int build_stream(u_int milliseconds, u_int channels, u_int sample_rate,
 int build_stream_from_ctrl(audio_ctrl_t ctrl, u_int ms, audio_stream_t *stream);
 int stream(audio_ctrl_t ctrl, audio_stream_t *stream);
 int clean_buffers(audio_stream_t *stream);
-void print_stream(audio_stream_t stream);
 void *flatten_stream(audio_stream_t *stream);
 #endif

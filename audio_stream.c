@@ -12,38 +12,6 @@
 #include "error_codes.h"
 
 /*
- * Print details about the audio stream
- */
-void
-print_stream(audio_stream_t stream)
-{
-	u_int i;
-	const char *encoding;
-
-	encoding = get_encoding_name((int)stream.encoding);
-
-	printw("STREAM\n"
-	       "\tmilliseconds:\t\t%d\n"
-	       "\tsamples_streamed:\t%d\n"
-	       "\tchannels:\t\t%d\n"
-	       "\tencoding:\t\t%s\n"
-	       "\tprecision:\t\t%d\n"
-	       "\ttotal_size:\t\t%d\n"
-	       "\ttotal_samples:\t\t%d\n"
-	       "\tbuffer_count:\t\t%d\n",
-	    stream.milliseconds, stream.samples_streamed, stream.channels,
-	    encoding, stream.precision, stream.total_size, stream.total_samples,
-	    stream.buffer_count);
-	printw("\tBUFFERS\n");
-	for (i = 0; i < stream.buffer_count; i++) {
-		printw("\t\tbuffer[%d]\n", i);
-		printw("\t\tsize: %d\n", stream.buffers[i]->size);
-		printw("\t\tsamples: %d\n", stream.buffers[i]->samples);
-		printw("\t\tprecision: %d\n", stream.buffers[i]->precision);
-	}
-}
-
-/*
  * Build an audio stream from the audio controller
  */
 int

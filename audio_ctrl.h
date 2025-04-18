@@ -50,7 +50,7 @@ typedef struct audio_ctrl_t {
 } audio_ctrl_t;
 
 int build_audio_ctrl(audio_ctrl_t *ctrl, char *path, int mode);
-void print_ctrl(audio_ctrl_t ctrl);
 const char *get_encoding_name(ctrlencoding encoding);
+const char *get_mode(audio_ctrl_t ctrl);
 
 #endif
